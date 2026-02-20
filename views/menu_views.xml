@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Action client pour le tableau de bord -->
+    <record id="action_youtube_dashboard" model="ir.actions.client">
+        <field name="name">Tableau de bord YouTube</field>
+        <field name="tag">youtube_downloader.dashboard</field>
+    </record>
+
+    <!-- Menu racine -->
+    <menuitem id="menu_youtube_downloader_root"
+              name="YouTube Downloader"
+              sequence="1"
+              web_icon="youtube_downloader,static/description/icon.png"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <!-- Tableau de bord -->
+    <menuitem id="menu_youtube_dashboard"
+              name="📊 Tableau de bord"
+              parent="menu_youtube_downloader_root"
+              action="action_youtube_dashboard"
+              sequence="5"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <!-- Sous-menu principal -->
+    <menuitem id="menu_youtube_download"
+              name="Mes téléchargements"
+              parent="menu_youtube_downloader_root"
+              action="action_youtube_download"
+              sequence="10"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <!-- Assistant de téléchargement -->
+    <menuitem id="menu_youtube_download_wizard"
+              name="⚡ Téléchargement rapide"
+              parent="menu_youtube_downloader_root"
+              action="action_youtube_download_wizard"
+              sequence="20"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <!-- Téléchargements en cours -->
+    <menuitem id="menu_youtube_download_active"
+              name="📥 En cours"
+              parent="menu_youtube_downloader_root"
+              action="action_youtube_download_active"
+              sequence="30"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <!-- Analyse -->
+    <menuitem id="menu_youtube_analysis"
+              name="📊 Analyse"
+              parent="menu_youtube_downloader_root"
+              sequence="40"
+              groups="youtube_downloader.group_youtube_manager"/>
+
+    <menuitem id="menu_youtube_analysis_all"
+              name="Tous les téléchargements"
+              parent="menu_youtube_analysis"
+              action="action_youtube_download_all"
+              sequence="10"/>
+
+    <menuitem id="menu_youtube_analysis_errors"
+              name="❌ Erreurs"
+              parent="menu_youtube_analysis"
+              action="action_youtube_download_errors"
+              sequence="20"/>
+
+    <!-- Administration -->
+    <menuitem id="menu_youtube_admin"
+              name="Administration"
+              parent="menu_youtube_downloader_root"
+              sequence="90"
+              groups="youtube_downloader.group_youtube_manager"/>
+
+    <menuitem id="menu_youtube_tags"
+              name="Tags"
+              parent="menu_youtube_admin"
+              action="action_youtube_download_tag"
+              sequence="10"
+              groups="youtube_downloader.group_youtube_manager"/>
+</odoo>

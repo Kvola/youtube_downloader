@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════
+         ACTIONS GROUPÉES — YouTube Video Downloader
+         Apparaissent dans le menu "Action" de la vue liste
+    ══════════════════════════════════════════════════════ -->
+
+    <!-- 1. TÉLÉCHARGER LA SÉLECTION -->
+    <record id="action_server_download_selection" model="ir.actions.server">
+        <field name="name">📥 Télécharger la sélection</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_download_batch()
+        </field>
+    </record>
+
+    <!-- 2. RÉCUPÉRER LES INFORMATIONS -->
+    <record id="action_server_fetch_info_selection" model="ir.actions.server">
+        <field name="name">🔍 Récupérer les informations</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_fetch_info_batch()
+        </field>
+    </record>
+
+    <!-- 3. ANNULER LA SÉLECTION -->
+    <record id="action_server_cancel_selection" model="ir.actions.server">
+        <field name="name">🚫 Annuler la sélection</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_cancel_batch()
+        </field>
+    </record>
+
+    <!-- 4. REMETTRE EN BROUILLON -->
+    <record id="action_server_reset_draft_selection" model="ir.actions.server">
+        <field name="name">🔄 Remettre en brouillon</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_reset_draft_batch()
+        </field>
+    </record>
+
+    <!-- 5. RELANCER LES ERREURS -->
+    <record id="action_server_retry_errors_selection" model="ir.actions.server">
+        <field name="name">🔁 Relancer les téléchargements en erreur</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_retry_errors_batch()
+        </field>
+    </record>
+
+    <!-- 6. SUPPRIMER LES FICHIERS PHYSIQUES -->
+    <record id="action_server_delete_files_selection" model="ir.actions.server">
+        <field name="name">🗑️ Supprimer les fichiers du disque</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_delete_files_batch()
+        </field>
+    </record>
+
+    <!-- 7. CHANGER LA QUALITÉ — 720p HD -->
+    <record id="action_server_set_quality_720p" model="ir.actions.server">
+        <field name="name">📺 Qualité → 720p HD</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_quality('720p')
+        </field>
+    </record>
+
+    <!-- 8. CHANGER LA QUALITÉ — 1080p Full HD -->
+    <record id="action_server_set_quality_1080p" model="ir.actions.server">
+        <field name="name">📺 Qualité → 1080p Full HD</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_quality('1080p')
+        </field>
+    </record>
+
+    <!-- 9. CHANGER LA QUALITÉ — Meilleure qualité -->
+    <record id="action_server_set_quality_best" model="ir.actions.server">
+        <field name="name">📺 Qualité → Meilleure</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_quality('best')
+        </field>
+    </record>
+
+    <!-- 10. CHANGER LA QUALITÉ — Audio MP3 -->
+    <record id="action_server_set_quality_audio" model="ir.actions.server">
+        <field name="name">🎵 Qualité → Audio MP3</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_quality('audio_only')
+        </field>
+    </record>
+
+    <!-- 11. CHANGER LE FORMAT — MP4 -->
+    <record id="action_server_set_format_mp4" model="ir.actions.server">
+        <field name="name">🎞️ Format → MP4</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_format('mp4')
+        </field>
+    </record>
+
+    <!-- 12. CHANGER LE FORMAT — MKV -->
+    <record id="action_server_set_format_mkv" model="ir.actions.server">
+        <field name="name">🎞️ Format → MKV</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_format('mkv')
+        </field>
+    </record>
+
+    <!-- 13. CHANGER LA PRIORITÉ — Haute -->
+    <record id="action_server_set_priority_high" model="ir.actions.server">
+        <field name="name">⬆️ Priorité → Haute</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_priority('2')
+        </field>
+    </record>
+
+    <!-- 14. CHANGER LA PRIORITÉ — Urgente -->
+    <record id="action_server_set_priority_urgent" model="ir.actions.server">
+        <field name="name">🔴 Priorité → Urgente</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_priority('3')
+        </field>
+    </record>
+
+    <!-- 15. CHANGER LA PRIORITÉ — Normale -->
+    <record id="action_server_set_priority_normal" model="ir.actions.server">
+        <field name="name">➡️ Priorité → Normale</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_set_priority('0')
+        </field>
+    </record>
+
+    <!-- 16. ACTIVER LES SOUS-TITRES -->
+    <record id="action_server_enable_subtitles" model="ir.actions.server">
+        <field name="name">💬 Activer les sous-titres (FR)</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_toggle_subtitles(True)
+        </field>
+    </record>
+
+    <!-- 17. DÉSACTIVER LES SOUS-TITRES -->
+    <record id="action_server_disable_subtitles" model="ir.actions.server">
+        <field name="name">💬 Désactiver les sous-titres</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+records.action_toggle_subtitles(False)
+        </field>
+    </record>
+
+</odoo>

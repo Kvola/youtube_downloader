@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="param_download_path" model="ir.config_parameter">
+            <field name="key">youtube_downloader.download_path</field>
+            <field name="value">/tmp/youtube_downloads</field>
+        </record>
+        <record id="param_default_quality" model="ir.config_parameter">
+            <field name="key">youtube_downloader.default_quality</field>
+            <field name="value">720p</field>
+        </record>
+        <record id="param_default_format" model="ir.config_parameter">
+            <field name="key">youtube_downloader.default_format</field>
+            <field name="value">mp4</field>
+        </record>
+        <record id="param_max_concurrent" model="ir.config_parameter">
+            <field name="key">youtube_downloader.max_concurrent</field>
+            <field name="value">3</field>
+        </record>
+        <record id="param_auto_fetch_info" model="ir.config_parameter">
+            <field name="key">youtube_downloader.auto_fetch_info</field>
+            <field name="value">True</field>
+        </record>
+        <record id="param_max_retries" model="ir.config_parameter">
+            <field name="key">youtube_downloader.max_retries</field>
+            <field name="value">3</field>
+        </record>
+        <record id="param_min_disk_space" model="ir.config_parameter">
+            <field name="key">youtube_downloader.min_disk_space</field>
+            <field name="value">500</field>
+        </record>
+        <record id="param_auto_retry" model="ir.config_parameter">
+            <field name="key">youtube_downloader.auto_retry</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Séquence pour les références -->
+        <record id="seq_youtube_download" model="ir.sequence">
+            <field name="name">Séquence Téléchargement YouTube</field>
+            <field name="code">youtube.download</field>
+            <field name="prefix">YTD/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+        </record>
+    </data>
+</odoo>

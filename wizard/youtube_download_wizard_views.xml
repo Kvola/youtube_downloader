@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_youtube_download_wizard_form" model="ir.ui.view">
+        <field name="name">youtube.download.wizard.form</field>
+        <field name="model">youtube.download.wizard</field>
+        <field name="arch" type="xml">
+            <form string="⚡ Téléchargement rapide YouTube">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <div class="d-flex align-items-start">
+                            <span class="fs-3 me-3">💡</span>
+                            <div>
+                                <strong>Téléchargement rapide</strong><br/>
+                                Entrez une ou plusieurs URLs YouTube, <strong>une URL par ligne</strong>.
+                                Les playlists sont aussi supportées !<br/>
+                                Le module créera automatiquement un enregistrement pour chaque URL.
+                            </div>
+                        </div>
+                    </div>
+
+                    <separator string="📋 URLs à télécharger" />
+                    <field name="url_list"
+                                   nolabel="1"
+                                   placeholder="https://www.youtube.com/watch?v=xxxxx&#10;https://youtu.be/yyyyy&#10;https://www.youtube.com/playlist?list=zzzzz"
+                                   widget="text"
+                                   style="min-height: 140px; font-family: monospace; font-size: 13px;"/>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                <div>
+                                    <span class="badge bg-primary me-1">
+                                        <field name="url_count"/> URL(s)
+                                    </span>
+                                    <span class="badge bg-info me-1" invisible="video_count == 0">
+                                        🎬 <field name="video_count"/> vidéo(s)
+                                    </span>
+                                    <span class="badge bg-warning text-dark" invisible="playlist_count == 0">
+                                        📋 <field name="playlist_count"/> playlist(s)
+                                    </span>
+                                </div>
+                                <button name="action_validate_urls"
+                                        string="✅ Valider les URLs"
+                                        type="object"
+                                        class="btn btn-sm btn-outline-success"/>
+                            </div>
+
+                    <group>
+                        <group string="⚙️ Paramètres">
+                            <field name="quality"/>
+                            <field name="output_format"/>
+                            <field name="download_path"
+                                   placeholder="Laisser vide pour le répertoire par défaut"/>
+                            <field name="priority"/>
+                        </group>
+                        <group string="🔧 Options">
+                            <field name="download_subtitles"/>
+                            <field name="subtitle_lang"
+                                   invisible="not download_subtitles"/>
+                            <field name="auto_retry"/>
+                            <field name="max_retries" invisible="not auto_retry"/>
+                            <field name="start_immediately"/>
+                            <field name="tag_ids" widget="many2many_tags"
+                                   options="{'color_field': 'color'}"/>
+                        </group>
+                    </group>
+                </sheet>
+
+                <footer>
+                    <button name="action_create_downloads"
+                            string="🚀 Créer et lancer les téléchargements"
+                            type="object"
+                            class="btn-primary"
+                            invisible="not start_immediately"/>
+                    <button name="action_create_downloads"
+                            string="💾 Créer sans lancer"
+                            type="object"
+                            class="btn-primary"
+                            invisible="start_immediately"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_youtube_download_wizard" model="ir.actions.act_window">
+        <field name="name">⚡ Téléchargement rapide</field>
+        <field name="res_model">youtube.download.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

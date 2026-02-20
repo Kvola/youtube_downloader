@@ -1,0 +1,675 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE FORMULAIRE
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_form" model="ir.ui.view">
+        <field name="name">youtube.download.form</field>
+        <field name="model">youtube.download</field>
+        <field name="arch" type="xml">
+            <form string="Téléchargement YouTube">
+                <!-- Barre de statut -->
+                <header>
+                    <button name="action_fetch_info"
+                            string="🔍 Récupérer les infos"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_start_download"
+                            string="▶ Télécharger"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state not in ('draft', 'error', 'cancelled')"/>
+                    <button name="action_retry_download"
+                            string="🔄 Réessayer"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state != 'error'"/>
+                    <button name="action_cancel"
+                            string="✖ Annuler"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state not in ('draft', 'pending', 'error')"/>
+                    <button name="action_reset_draft"
+                            string="↩ Remettre en brouillon"
+                            type="object"
+                            invisible="state not in ('error', 'cancelled', 'done')"/>
+                    <button name="action_view_playlist_items"
+                            string="📋 Voir les vidéos"
+                            type="object"
+                            class="btn-info"
+                            invisible="not is_playlist or playlist_count == 0"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,pending,downloading,done"/>
+                </header>
+
+                <sheet>
+                    <!-- Champs cachés pour les modifiers -->
+                    <field name="video_duration" invisible="1"/>
+                    <field name="is_playlist" invisible="1"/>
+                    <field name="playlist_count" invisible="1"/>
+                    <field name="file_exists" invisible="1"/>
+
+                    <!-- Ribbon pour la priorité -->
+                    <widget name="web_ribbon" title="Urgente"
+                            bg_color="text-bg-danger"
+                            invisible="priority != '3'"/>
+                    <widget name="web_ribbon" title="Haute priorité"
+                            bg_color="text-bg-warning"
+                            invisible="priority != '2'"/>
+
+                    <!-- Titre + Référence -->
+                    <div class="oe_title">
+                        <label for="reference" string="Réf."/>
+                        <h3>
+                            <field name="reference" readonly="1"/>
+                        </h3>
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Titre de la vidéo..."
+                                   readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+
+                    <!-- Barre de progression -->
+                    <div class="alert alert-info d-flex align-items-center" role="alert"
+                         invisible="state not in ('downloading', 'pending')">
+                        <div class="flex-grow-1">
+                            <strong>📥 Téléchargement en cours...</strong>
+                            <div class="progress mt-2" style="height: 24px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                     style="width: 0%;"
+                                     id="yt_progress_bar">
+                                    <span class="fw-bold" id="yt_progress_text"></span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted">
+                                    Progression : <field name="progress" widget="float"/>%
+                                </small>
+                                <small class="text-muted">
+                                    Tentative : <field name="retry_count"/> / <field name="max_retries"/>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerte erreur -->
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'error'">
+                        <div class="d-flex align-items-start">
+                            <span class="fs-3 me-3">❌</span>
+                            <div class="flex-grow-1">
+                                <strong>Erreur lors du téléchargement</strong>
+                                <div class="mt-1">
+                                    <field name="error_message"/>
+                                </div>
+                                <div class="mt-2" invisible="not last_error_date">
+                                    <small class="text-muted">
+                                        Dernière erreur : <field name="last_error_date"/>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerte succès -->
+                    <div class="alert alert-success d-flex align-items-center" role="alert"
+                         invisible="state != 'done'">
+                        <span class="fs-3 me-3">✅</span>
+                        <div class="flex-grow-1">
+                            <strong>Téléchargement terminé</strong>
+                            <span invisible="not file_name" class="ms-2">
+                                — <field name="file_name"/>
+                            </span>
+                        </div>
+                        <button name="action_open_file_location"
+                                string="📁 Voir"
+                                type="object"
+                                class="btn btn-sm btn-outline-success ms-2"
+                                invisible="not file_exists"/>
+                    </div>
+
+                    <!-- Bannière Playlist -->
+                    <div class="alert alert-warning d-flex align-items-center" role="alert"
+                         invisible="not is_playlist">
+                        <span class="fs-3 me-3">📋</span>
+                        <div>
+                            <strong>Playlist YouTube</strong>
+                            <span invisible="not playlist_title">
+                                : <field name="playlist_title"/>
+                            </span>
+                            <span invisible="playlist_count == 0" class="ms-2 badge bg-primary">
+                                <field name="playlist_count"/> vidéo(s)
+                            </span>
+                        </div>
+                    </div>
+
+                    <group>
+                        <!-- Colonne gauche : URL + options -->
+                        <group string="📺 Vidéo YouTube">
+                            <field name="url"
+                                   placeholder="https://www.youtube.com/watch?v=..."
+                                   widget="url"
+                                   readonly="state != 'draft'"/>
+                            <field name="video_id" invisible="not video_id"/>
+                            <field name="quality" readonly="state != 'draft'"/>
+                            <field name="output_format" readonly="state != 'draft'"/>
+                            <field name="priority"/>
+                            <field name="download_path"
+                                   placeholder="Laisser vide pour le répertoire par défaut"
+                                   readonly="state != 'draft'"/>
+                            <field name="effective_path" string="Répertoire effectif"/>
+                        </group>
+
+                        <!-- Colonne droite : Infos vidéo -->
+                        <group string="ℹ️ Informations">
+                            <field name="video_title" invisible="not video_title"/>
+                            <field name="video_author" invisible="not video_author"/>
+                            <field name="video_duration_display" string="Durée"
+                                   invisible="video_duration == 0"/>
+                            <field name="video_views" invisible="video_views == 0"/>
+                            <field name="user_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <!-- Miniature -->
+                    <group invisible="not video_thumbnail_url">
+                        <group string="🖼️ Miniature" colspan="2">
+                            <field name="video_thumbnail_url" widget="image_url"
+                                   nolabel="1" class="text-center"
+                                   options="{'size': [0, 300]}"/>
+                        </group>
+                    </group>
+
+                    <!-- Onglets -->
+                    <notebook>
+                        <!-- Onglet Options avancées -->
+                        <page string="⚙️ Options avancées" name="advanced">
+                            <group>
+                                <group string="Sous-titres">
+                                    <field name="download_subtitles" readonly="state != 'draft'"/>
+                                    <field name="subtitle_lang"
+                                           invisible="not download_subtitles"
+                                           readonly="state != 'draft'"/>
+                                    <field name="embed_subtitles"
+                                           invisible="not download_subtitles"
+                                           readonly="state != 'draft'"/>
+                                </group>
+                                <group string="Autres options">
+                                    <field name="download_thumbnail" readonly="state != 'draft'"/>
+                                    <field name="use_proxy" readonly="state != 'draft'"/>
+                                    <field name="proxy_url"
+                                           invisible="not use_proxy"
+                                           required="use_proxy"
+                                           readonly="state != 'draft'"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Robustesse">
+                                    <field name="auto_retry"/>
+                                    <field name="max_retries"/>
+                                    <field name="retry_count" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Onglet Résultat téléchargement -->
+                        <page string="📦 Résultat" name="result"
+                              invisible="state != 'done'">
+                            <group>
+                                <group string="Fichier téléchargé">
+                                    <field name="file_path" string="Chemin complet"/>
+                                    <field name="file_name"/>
+                                    <field name="file_size_display" string="Taille"/>
+                                    <field name="download_speed"/>
+                                    <field name="download_date"/>
+                                    <field name="download_duration" string="Durée du dl (sec)"/>
+                                </group>
+                                <group string="Actions sur le fichier">
+                                    <div class="mt-3">
+                                        <button name="action_open_file_location"
+                                                string="📁 Voir l'emplacement"
+                                                type="object"
+                                                class="btn btn-secondary me-2"
+                                                invisible="not file_exists"/>
+                                        <button name="action_delete_file"
+                                                string="🗑️ Supprimer le fichier"
+                                                type="object"
+                                                class="btn btn-danger"
+                                                confirm="Êtes-vous sûr de vouloir supprimer le fichier physique ?"/>
+                                    </div>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Onglet Playlist -->
+                        <page string="📋 Playlist" name="playlist"
+                              invisible="not is_playlist">
+                            <group>
+                                <group>
+                                    <field name="playlist_id"/>
+                                    <field name="playlist_title"/>
+                                    <field name="playlist_index"
+                                           invisible="playlist_index == 0"/>
+                                    <field name="parent_playlist_id"
+                                           invisible="not parent_playlist_id"/>
+                                </group>
+                            </group>
+                            <field name="playlist_item_ids" invisible="not playlist_item_ids">
+                                <tree>
+                                    <field name="playlist_index" string="#"/>
+                                    <field name="reference"/>
+                                    <field name="name"/>
+                                    <field name="quality"/>
+                                    <field name="progress" widget="progressbar"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'done'"
+                                           decoration-danger="state == 'error'"
+                                           decoration-warning="state in ('pending', 'downloading')"/>
+                                    <field name="file_size_display" string="Taille"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <!-- Onglet Description -->
+                        <page string="📝 Description" name="description"
+                              invisible="not video_description">
+                            <field name="video_description" nolabel="1" widget="text"/>
+                        </page>
+
+                        <!-- Onglet Notes -->
+                        <page string="🗒️ Notes" name="notes">
+                            <field name="tag_ids" widget="many2many_tags"
+                                   options="{'color_field': 'color', 'no_create_edit': False}"/>
+                            <field name="note" nolabel="1" placeholder="Ajoutez vos notes ici..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <!-- Chatter -->
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE LISTE
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_list" model="ir.ui.view">
+        <field name="name">youtube.download.list</field>
+        <field name="model">youtube.download</field>
+        <field name="arch" type="xml">
+            <tree string="Téléchargements YouTube"
+                  decoration-success="state == 'done'"
+                  decoration-warning="state in ('pending', 'downloading')"
+                  decoration-danger="state == 'error'"
+                  decoration-muted="state == 'cancelled'"
+                  multi_edit="1"
+                  sample="1">
+                <header>
+                    <button name="action_download_batch"
+                            string="▶ Télécharger la sélection"
+                            type="object"
+                            class="btn-primary"/>
+                </header>
+                <field name="reference" optional="show"/>
+                <field name="name"/>
+                <field name="url" widget="url" optional="hide"/>
+                <field name="quality" optional="show"/>
+                <field name="output_format" optional="show"/>
+                <field name="video_author" optional="show"/>
+                <field name="video_duration_display" string="Durée" optional="show"/>
+                <field name="file_size_display" string="Taille" optional="show"/>
+                <field name="download_speed" optional="hide"/>
+                <field name="progress" widget="progressbar" optional="show"/>
+                <field name="retry_count" string="Tentatives" optional="hide"/>
+                <field name="priority" widget="priority" optional="show"/>
+                <field name="state"
+                       widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-warning="state in ('pending', 'downloading')"
+                       decoration-danger="state == 'error'"
+                       decoration-muted="state in ('draft', 'cancelled')"/>
+                <field name="download_date" optional="show"/>
+                <field name="user_id" widget="many2one_avatar" optional="show"/>
+                <field name="tag_ids" widget="many2many_tags"
+                       options="{'color_field': 'color'}" optional="hide"/>
+                <button name="action_start_download"
+                        string="▶"
+                        type="object"
+                        icon="fa-play"
+                        title="Télécharger"
+                        invisible="state not in ('draft', 'error', 'cancelled')"/>
+                <button name="action_retry_download"
+                        string="🔄"
+                        type="object"
+                        icon="fa-refresh"
+                        title="Réessayer"
+                        invisible="state != 'error'"/>
+                <button name="action_cancel"
+                        string="✖"
+                        type="object"
+                        icon="fa-stop"
+                        title="Annuler"
+                        invisible="state not in ('pending', 'draft')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE KANBAN
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_kanban" model="ir.ui.view">
+        <field name="name">youtube.download.kanban</field>
+        <field name="model">youtube.download</field>
+        <field name="arch" type="xml">
+            <kanban class="o_youtube_kanban" default_group_by="state" sample="1">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="state"/>
+                <field name="quality"/>
+                <field name="output_format"/>
+                <field name="video_author"/>
+                <field name="video_duration_display"/>
+                <field name="file_size_display"/>
+                <field name="download_speed"/>
+                <field name="progress"/>
+                <field name="video_thumbnail_url"/>
+                <field name="url"/>
+                <field name="user_id"/>
+                <field name="download_date"/>
+                <field name="is_playlist"/>
+                <field name="playlist_count"/>
+                <field name="retry_count"/>
+                <field name="priority"/>
+                <field name="tag_ids"/>
+                <progressbar field="state"
+                             colors='{"done": "success", "error": "danger", "downloading": "warning", "pending": "info", "draft": "muted", "cancelled": "200"}'/>
+                <templates>
+                    <t t-name="kanban-card">
+                        <div class="oe_kanban_card oe_kanban_global_click o_youtube_card">
+                            <!-- Miniature -->
+                            <div class="o_youtube_thumbnail text-center position-relative">
+                                <img t-if="record.video_thumbnail_url.value"
+                                     t-att-src="record.video_thumbnail_url.value"
+                                     class="img-fluid rounded-top"
+                                     style="max-height: 140px; object-fit: cover; width: 100%;"
+                                     alt="Miniature vidéo"/>
+                                <div t-else="" class="bg-dark text-white rounded-top d-flex align-items-center justify-content-center"
+                                     style="height: 100px;">
+                                    <span class="fs-1" t-if="record.is_playlist.raw_value">📋</span>
+                                    <span class="fs-1" t-else="">🎬</span>
+                                </div>
+                                <!-- Badge durée -->
+                                <span t-if="record.video_duration_display.value and record.video_duration_display.value != '00:00'"
+                                      class="position-absolute bottom-0 end-0 badge bg-dark bg-opacity-75 m-1 small">
+                                    <t t-esc="record.video_duration_display.value"/>
+                                </span>
+                                <!-- Badge playlist -->
+                                <span t-if="record.is_playlist.raw_value"
+                                      class="position-absolute top-0 start-0 badge bg-primary m-1">
+                                    📋 <t t-esc="record.playlist_count.value"/> vidéos
+                                </span>
+                            </div>
+
+                            <div class="p-2">
+                                <!-- Titre -->
+                                <strong class="o_kanban_record_title d-block text-truncate" style="max-width: 250px;">
+                                    <field name="name"/>
+                                </strong>
+
+                                <!-- Auteur -->
+                                <div class="text-muted small mt-1">
+                                    <span t-if="record.video_author.value">
+                                        📺 <t t-esc="record.video_author.value"/>
+                                    </span>
+                                    <span t-if="record.reference.value" class="float-end text-muted">
+                                        <t t-esc="record.reference.value"/>
+                                    </span>
+                                </div>
+
+                                <!-- Badges état + qualité -->
+                                <div class="mt-2 d-flex gap-1 flex-wrap">
+                                    <span class="badge rounded-pill"
+                                          t-attf-class="#{record.state.value == 'done' ? 'bg-success' : record.state.value == 'error' ? 'bg-danger' : record.state.value == 'downloading' ? 'bg-warning text-dark' : record.state.value == 'pending' ? 'bg-info' : 'bg-secondary'}">
+                                        <t t-if="record.state.value == 'done'">✅</t>
+                                        <t t-elif="record.state.value == 'error'">❌</t>
+                                        <t t-elif="record.state.value == 'downloading'">📥</t>
+                                        <t t-elif="record.state.value == 'pending'">⏳</t>
+                                        <t t-else="">📝</t>
+                                        <t t-esc="record.state.value"/>
+                                    </span>
+                                    <span class="badge bg-primary bg-opacity-75">
+                                        <t t-esc="record.quality.value"/>
+                                    </span>
+                                    <span class="badge bg-secondary">
+                                        <t t-esc="record.output_format.value"/>
+                                    </span>
+                                </div>
+
+                                <!-- Barre de progression -->
+                                <div t-if="record.state.raw_value == 'downloading' or record.state.raw_value == 'pending'" class="mt-2">
+                                    <div class="progress" style="height: 10px; border-radius: 5px;">
+                                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                             t-attf-style="width: #{record.progress.value}%"/>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="fw-bold"><t t-esc="record.progress.value"/>%</small>
+                                        <small t-if="record.retry_count.value > 1" class="text-muted">
+                                            🔄 <t t-esc="record.retry_count.value"/>
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Infos fichier -->
+                                <div t-if="record.file_size_display.value and record.file_size_display.value != '—'" class="text-muted small mt-2">
+                                    📦 <t t-esc="record.file_size_display.value"/>
+                                    <span t-if="record.download_speed.value and record.download_speed.value != '—'" class="ms-2">
+                                        ⚡ <t t-esc="record.download_speed.value"/>
+                                    </span>
+                                </div>
+
+                                <!-- Footer avec avatar -->
+                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                    <field name="tag_ids" widget="many2many_tags"
+                                           options="{'color_field': 'color'}"/>
+                                    <img t-att-src="kanban_image('res.users', 'avatar_128', record.user_id.raw_value)"
+                                         class="rounded-circle" width="28" height="28"
+                                         t-att-title="record.user_id.value"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE RECHERCHE
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_search" model="ir.ui.view">
+        <field name="name">youtube.download.search</field>
+        <field name="model">youtube.download</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un téléchargement">
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="url"/>
+                <field name="video_author"/>
+                <field name="video_title"/>
+                <field name="tag_ids"/>
+
+                <filter string="Mes téléchargements" name="my_downloads"
+                        domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Brouillon" name="draft"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter string="En cours" name="downloading"
+                        domain="[('state', 'in', ['pending', 'downloading'])]"/>
+                <filter string="Terminés" name="done"
+                        domain="[('state', '=', 'done')]"/>
+                <filter string="Erreurs" name="error"
+                        domain="[('state', '=', 'error')]"/>
+                <filter string="Annulés" name="cancelled"
+                        domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Playlists" name="playlists"
+                        domain="[('is_playlist', '=', True)]"/>
+                <filter string="Vidéos seules" name="videos_only"
+                        domain="[('is_playlist', '=', False)]"/>
+                <separator/>
+                <filter string="Haute qualité (1080p+)" name="hd"
+                        domain="[('quality', 'in', ['1080p', 'best'])]"/>
+                <filter string="Audio seulement" name="audio"
+                        domain="[('quality', 'in', ['audio_only', 'audio_wav'])]"/>
+                <separator/>
+                <filter string="Aujourd'hui" name="today"
+                        domain="[('create_date', '>=', (context_today()).strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter string="Cette semaine" name="this_week"
+                        domain="[('create_date', '>=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Ce mois" name="this_month"
+                        domain="[('create_date', '>=', (context_today()).strftime('%Y-%m-01'))]"/>
+                <separator/>
+                <filter string="Priorité haute/urgente" name="high_priority"
+                        domain="[('priority', 'in', ['2', '3'])]"/>
+
+                <group expand="0" string="Regrouper par">
+                    <filter string="État" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Qualité" name="group_quality" context="{'group_by': 'quality'}"/>
+                    <filter string="Format" name="group_format" context="{'group_by': 'output_format'}"/>
+                    <filter string="Auteur" name="group_author" context="{'group_by': 'video_author'}"/>
+                    <filter string="Utilisateur" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Priorité" name="group_priority" context="{'group_by': 'priority'}"/>
+                    <filter string="Playlist" name="group_playlist" context="{'group_by': 'parent_playlist_id'}"/>
+                    <filter string="Date" name="group_date" context="{'group_by': 'download_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE GRAPHIQUE
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_graph" model="ir.ui.view">
+        <field name="name">youtube.download.graph</field>
+        <field name="model">youtube.download</field>
+        <field name="arch" type="xml">
+            <graph string="Statistiques téléchargements" type="bar">
+                <field name="download_date" interval="week" type="col"/>
+                <field name="file_size" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE PIVOT
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_pivot" model="ir.ui.view">
+        <field name="name">youtube.download.pivot</field>
+        <field name="model">youtube.download</field>
+        <field name="arch" type="xml">
+            <pivot string="Analyse des téléchargements" sample="1">
+                <field name="quality" type="row"/>
+                <field name="state" type="col"/>
+                <field name="file_size" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE CALENDRIER
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_calendar" model="ir.ui.view">
+        <field name="name">youtube.download.calendar</field>
+        <field name="model">youtube.download</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendrier téléchargements"
+                      date_start="download_date"
+                      color="state"
+                      mode="month"
+                      quick_create="0">
+                <field name="name"/>
+                <field name="quality"/>
+                <field name="file_size_display"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACTION PRINCIPALE
+    ════════════════════════════════════════════════════════════ -->
+    <record id="action_youtube_download" model="ir.actions.act_window">
+        <field name="name">Téléchargements YouTube</field>
+        <field name="res_model">youtube.download</field>
+        <field name="view_mode">tree,kanban,form,graph,pivot,calendar</field>
+        <field name="search_view_id" ref="view_youtube_download_search"/>
+        <field name="context">{'search_default_my_downloads': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun téléchargement pour le moment
+            </p>
+            <p>
+                Cliquez sur <b>Nouveau</b> pour télécharger votre première vidéo YouTube,
+                ou utilisez <b>⚡ Téléchargement rapide</b> pour plusieurs URLs à la fois.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action Tous les téléchargements -->
+    <record id="action_youtube_download_all" model="ir.actions.act_window">
+        <field name="name">Tous les téléchargements</field>
+        <field name="res_model">youtube.download</field>
+        <field name="view_mode">tree,kanban,form,graph,pivot,calendar</field>
+        <field name="search_view_id" ref="view_youtube_download_search"/>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Action téléchargements en erreur -->
+    <record id="action_youtube_download_errors" model="ir.actions.act_window">
+        <field name="name">Téléchargements en erreur</field>
+        <field name="res_model">youtube.download</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_youtube_download_search"/>
+        <field name="domain">[('state', '=', 'error')]</field>
+    </record>
+
+    <!-- Action téléchargements en cours -->
+    <record id="action_youtube_download_active" model="ir.actions.act_window">
+        <field name="name">En cours de téléchargement</field>
+        <field name="res_model">youtube.download</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('state', 'in', ['pending', 'downloading'])]</field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE / ACTION POUR LES TAGS
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_tag_list" model="ir.ui.view">
+        <field name="name">youtube.download.tag.list</field>
+        <field name="model">youtube.download.tag</field>
+        <field name="arch" type="xml">
+            <tree string="Tags" editable="bottom">
+                <field name="name"/>
+                <field name="color" widget="color_picker"/>
+                <field name="download_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_youtube_download_tag" model="ir.actions.act_window">
+        <field name="name">Tags</field>
+        <field name="res_model">youtube.download.tag</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Catégorie de module -->
+        <record id="module_category_youtube_downloader" model="ir.module.category">
+            <field name="name">YouTube Downloader</field>
+            <field name="sequence">100</field>
+        </record>
+
+        <!-- Groupe utilisateur standard -->
+        <record id="group_youtube_user" model="res.groups">
+            <field name="name">Utilisateur</field>
+            <field name="category_id" ref="module_category_youtube_downloader"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Groupe manager -->
+        <record id="group_youtube_manager" model="res.groups">
+            <field name="name">Gestionnaire</field>
+            <field name="category_id" ref="module_category_youtube_downloader"/>
+            <field name="implied_ids" eval="[(4, ref('group_youtube_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- Règles d'accès par enregistrement -->
+        <record id="rule_youtube_download_user" model="ir.rule">
+            <field name="name">YouTube: utilisateur voit ses téléchargements</field>
+            <field name="model_id" ref="model_youtube_download"/>
+            <field name="groups" eval="[(4, ref('group_youtube_user'))]"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="rule_youtube_download_manager" model="ir.rule">
+            <field name="name">YouTube: gestionnaire voit tout</field>
+            <field name="model_id" ref="model_youtube_download"/>
+            <field name="groups" eval="[(4, ref('group_youtube_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Règles d'accès pour les tokens API -->
+        <record id="rule_youtube_api_token_user" model="ir.rule">
+            <field name="name">YouTube: utilisateur voit ses tokens</field>
+            <field name="model_id" ref="model_youtube_api_token"/>
+            <field name="groups" eval="[(4, ref('group_youtube_user'))]"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="rule_youtube_api_token_manager" model="ir.rule">
+            <field name="name">YouTube: gestionnaire voit tous les tokens</field>
+            <field name="model_id" ref="model_youtube_api_token"/>
+            <field name="groups" eval="[(4, ref('group_youtube_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+    </data>
+</odoo>

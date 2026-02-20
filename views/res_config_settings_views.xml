@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.youtube</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority">100</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="YouTube Downloader" name="youtube_downloader"
+                     groups="youtube_downloader.group_youtube_manager">
+
+                    <block title="Répertoires et stockage">
+                        <setting id="youtube_download_path"
+                                 string="Répertoire par défaut"
+                                 help="Chemin absolu où les vidéos seront stockées.">
+                            <field name="youtube_download_path"
+                                   placeholder="/home/user/Videos/YouTube"/>
+                            <div class="mt-2">
+                                <button name="action_test_download_path"
+                                        string="🖥️ Tester l'accès"
+                                        type="object"
+                                        class="btn btn-sm btn-outline-secondary"/>
+                            </div>
+                        </setting>
+                        <setting string="Espace disque"
+                                 help="Informations sur le stockage disponible.">
+                            <field name="youtube_disk_space_info" readonly="1"/>
+                        </setting>
+                        <setting string="Espace minimum requis (Mo)"
+                                 help="Vérification de l'espace disque avant chaque téléchargement.">
+                            <field name="youtube_min_disk_space"/>
+                        </setting>
+                    </block>
+
+                    <block title="Qualité et format">
+                        <setting id="youtube_default_quality" string="Qualité par défaut">
+                            <field name="youtube_default_quality"/>
+                        </setting>
+                        <setting id="youtube_default_format" string="Format par défaut">
+                            <field name="youtube_default_format"/>
+                        </setting>
+                    </block>
+
+                    <block title="Performances et robustesse">
+                        <setting id="youtube_max_concurrent"
+                                 string="Téléchargements simultanés"
+                                 help="Nombre de téléchargements pouvant s'exécuter en parallèle.">
+                            <field name="youtube_max_concurrent"/>
+                        </setting>
+                        <setting id="youtube_auto_fetch_info"
+                                 string="Récupération automatique des infos">
+                            <field name="youtube_auto_fetch_info"/>
+                        </setting>
+                        <setting id="youtube_auto_retry"
+                                 string="Réessayer automatiquement"
+                                 help="Relancer automatiquement les téléchargements en erreur.">
+                            <field name="youtube_auto_retry"/>
+                        </setting>
+                        <setting id="youtube_max_retries"
+                                 string="Nombre de tentatives par défaut">
+                            <field name="youtube_max_retries"/>
+                        </setting>
+                    </block>
+
+                    <block title="Informations système">
+                        <setting string="Version yt-dlp"
+                                 help="Librairie Python utilisée pour les téléchargements.">
+                            <div class="d-flex align-items-center gap-2">
+                                <field name="youtube_ytdlp_version" readonly="1"/>
+                                <button name="action_install_ytdlp"
+                                        string="🔄 Installer / Mettre à jour"
+                                        type="object"
+                                        class="btn btn-sm btn-outline-primary"/>
+                            </div>
+                        </setting>
+                        <setting string="Statistiques">
+                            <div class="d-flex gap-4">
+                                <div>
+                                    <span class="text-muted">Total téléchargés :</span>
+                                    <strong><field name="youtube_total_downloads"/></strong>
+                                </div>
+                                <div>
+                                    <span class="text-muted">Taille totale :</span>
+                                    <strong><field name="youtube_total_size"/></strong>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

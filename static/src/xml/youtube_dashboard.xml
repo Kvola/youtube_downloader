@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="youtube_downloader.Dashboard">
+        <div class="o_youtube_dashboard">
+
+            <!-- ─── EN-TÊTE PREMIUM ─── -->
+            <div class="yt_dash_header">
+                <div class="yt_dash_header_left">
+                    <div class="yt_dash_logo">
+                        <div class="yt_logo_icon">
+                            <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                        </div>
+                        <div class="yt_dash_title_group">
+                            <h2 class="yt_dash_title">YouTube Downloader</h2>
+                            <span class="yt_dash_subtitle">Tableau de bord — Vue d'ensemble</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="yt_dash_header_right">
+                    <div class="yt_header_badge" t-if="!state.loading and state.data">
+                        <span class="yt_live_dot" t-if="state.data.in_progress > 0"/>
+                        <span t-if="state.data.in_progress > 0" class="yt_live_text">
+                            <t t-esc="state.data.in_progress"/> actif(s)
+                        </span>
+                        <span t-else="" class="yt_idle_text">Aucun téléchargement actif</span>
+                    </div>
+                    <button class="yt_btn yt_btn_primary" t-on-click="onClickNewDownload">
+                        <i class="fa fa-plus me-1"/>Télécharger
+                    </button>
+                    <button class="yt_btn yt_btn_ghost" t-on-click="onRefresh"
+                            t-att-class="{'yt_spinning': state.loading}">
+                        <i class="fa fa-refresh"/>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ─── CHARGEMENT ─── -->
+            <div t-if="state.loading" class="yt_loading_container">
+                <div class="yt_loading_spinner">
+                    <div class="yt_spinner_ring"/>
+                    <div class="yt_spinner_ring yt_spinner_ring_2"/>
+                    <div class="yt_spinner_ring yt_spinner_ring_3"/>
+                </div>
+                <p class="yt_loading_text">Chargement des statistiques...</p>
+            </div>
+
+            <div t-if="!state.loading and state.data" class="yt_dash_content">
+
+                <!-- ════════ RANGÉE 1 : KPI PRINCIPAUX ════════ -->
+                <div class="yt_kpi_grid">
+                    <!-- Total -->
+                    <div class="yt_kpi_card" t-on-click="onClickTotal" role="button">
+                        <div class="yt_kpi_icon yt_kpi_icon_total">
+                            <i class="fa fa-database"/>
+                        </div>
+                        <div class="yt_kpi_content">
+                            <div class="yt_kpi_value"><t t-esc="state.data.total"/></div>
+                            <div class="yt_kpi_label">Total</div>
+                        </div>
+                    </div>
+                    <!-- Terminés -->
+                    <div class="yt_kpi_card" t-on-click="onClickDone" role="button">
+                        <div class="yt_kpi_icon yt_kpi_icon_done">
+                            <i class="fa fa-check-circle"/>
+                        </div>
+                        <div class="yt_kpi_content">
+                            <div class="yt_kpi_value"><t t-esc="state.data.done"/></div>
+                            <div class="yt_kpi_label">Terminés</div>
+                        </div>
+                    </div>
+                    <!-- En cours -->
+                    <div class="yt_kpi_card" t-on-click="onClickInProgress" role="button">
+                        <div class="yt_kpi_icon yt_kpi_icon_progress">
+                            <i class="fa fa-bolt"/>
+                        </div>
+                        <div class="yt_kpi_content">
+                            <div class="yt_kpi_value"><t t-esc="state.data.in_progress"/></div>
+                            <div class="yt_kpi_label">En cours</div>
+                        </div>
+                        <div class="yt_kpi_pulse" t-if="state.data.in_progress > 0"/>
+                    </div>
+                    <!-- Erreurs -->
+                    <div class="yt_kpi_card" t-on-click="onClickErrors" role="button">
+                        <div class="yt_kpi_icon yt_kpi_icon_error">
+                            <i class="fa fa-exclamation-triangle"/>
+                        </div>
+                        <div class="yt_kpi_content">
+                            <div class="yt_kpi_value"><t t-esc="state.data.errors"/></div>
+                            <div class="yt_kpi_label">Erreurs</div>
+                        </div>
+                    </div>
+                    <!-- Espace utilisé -->
+                    <div class="yt_kpi_card">
+                        <div class="yt_kpi_icon yt_kpi_icon_storage">
+                            <i class="fa fa-hdd-o"/>
+                        </div>
+                        <div class="yt_kpi_content">
+                            <div class="yt_kpi_value yt_kpi_value_sm"><t t-esc="state.data.total_size"/></div>
+                            <div class="yt_kpi_label">Stockage</div>
+                        </div>
+                    </div>
+                    <!-- Durée totale -->
+                    <div class="yt_kpi_card">
+                        <div class="yt_kpi_icon yt_kpi_icon_duration">
+                            <i class="fa fa-clock-o"/>
+                        </div>
+                        <div class="yt_kpi_content">
+                            <div class="yt_kpi_value yt_kpi_value_sm"><t t-esc="state.data.total_duration"/></div>
+                            <div class="yt_kpi_label">Contenu</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════ RANGÉE 2 : GRAPHIQUE + INSIGHTS ════════ -->
+                <div class="yt_dash_row yt_dash_row_chart">
+                    <!-- Graphique des 14 derniers jours -->
+                    <div class="yt_card yt_card_chart">
+                        <div class="yt_card_header">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-area-chart me-2"/>Activité des 14 derniers jours
+                            </h6>
+                            <div class="yt_trend_badge" t-if="state.data.weekly_trend !== 0"
+                                 t-att-class="{'yt_trend_up': state.data.weekly_trend > 0, 'yt_trend_down': state.data.weekly_trend &lt; 0}">
+                                <i t-attf-class="fa #{state.data.weekly_trend >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"/>
+                                <span><t t-esc="Math.abs(state.data.weekly_trend)"/>%</span>
+                            </div>
+                        </div>
+                        <div class="yt_card_body">
+                            <div class="yt_chart_container">
+                                <div class="yt_bar_chart">
+                                    <t t-foreach="chartData" t-as="bar" t-key="bar.date">
+                                        <div class="yt_bar_col">
+                                            <div class="yt_bar_tooltip"><t t-esc="bar.count"/></div>
+                                            <div class="yt_bar"
+                                                 t-attf-style="height: #{bar.height}%;"
+                                                 t-att-class="{'yt_bar_today': bar_last, 'yt_bar_zero': bar.count === 0}">
+                                            </div>
+                                            <div class="yt_bar_label"><t t-esc="bar.date"/></div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Insights -->
+                    <div class="yt_card yt_card_insights">
+                        <div class="yt_card_header">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-lightbulb-o me-2"/>Insights
+                            </h6>
+                        </div>
+                        <div class="yt_card_body">
+                            <!-- Taux de succès -->
+                            <div class="yt_insight_item">
+                                <div class="yt_insight_header">
+                                    <span class="yt_insight_label">Taux de succès</span>
+                                    <span t-attf-class="yt_insight_value #{successRateColor}">
+                                        <t t-esc="state.data.success_rate"/>%
+                                    </span>
+                                </div>
+                                <div class="yt_progress_track">
+                                    <div t-attf-class="yt_progress_fill #{successRateBarClass}"
+                                         t-attf-style="width: #{successRateWidth}"/>
+                                </div>
+                            </div>
+                            <!-- Vitesse moyenne -->
+                            <div class="yt_insight_item">
+                                <div class="yt_insight_header">
+                                    <span class="yt_insight_label">
+                                        <i class="fa fa-tachometer me-1"/>Vitesse moy.
+                                    </span>
+                                    <span class="yt_insight_value"><t t-esc="state.data.avg_speed"/></span>
+                                </div>
+                            </div>
+                            <!-- Taille moyenne -->
+                            <div class="yt_insight_item">
+                                <div class="yt_insight_header">
+                                    <span class="yt_insight_label">
+                                        <i class="fa fa-file-o me-1"/>Taille moy.
+                                    </span>
+                                    <span class="yt_insight_value"><t t-esc="state.data.avg_size"/> Mo</span>
+                                </div>
+                            </div>
+                            <!-- 7 derniers jours -->
+                            <div class="yt_insight_item">
+                                <div class="yt_insight_header">
+                                    <span class="yt_insight_label">
+                                        <i class="fa fa-calendar me-1"/>7 derniers jours
+                                    </span>
+                                    <span class="yt_insight_value yt_insight_accent">
+                                        <t t-esc="state.data.recent_count"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- Audio vs Vidéo -->
+                            <div class="yt_insight_item" t-if="state.data.done > 0">
+                                <div class="yt_insight_header">
+                                    <span class="yt_insight_label">
+                                        <i class="fa fa-pie-chart me-1"/>Répartition
+                                    </span>
+                                </div>
+                                <div class="yt_type_split">
+                                    <div class="yt_type_bar">
+                                        <div class="yt_type_fill yt_type_video"
+                                             t-attf-style="width: #{videoPercent}%"/>
+                                        <div class="yt_type_fill yt_type_audio"
+                                             t-attf-style="width: #{audioPercent}%"/>
+                                    </div>
+                                    <div class="yt_type_legend">
+                                        <span class="yt_legend_dot yt_legend_video"/>
+                                        <span>Vidéo (<t t-esc="state.data.video_count"/>)</span>
+                                        <span class="yt_legend_dot yt_legend_audio"/>
+                                        <span>Audio (<t t-esc="state.data.audio_count"/>)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════ RANGÉE 3 : TÉLÉCHARGEMENTS ACTIFS (si existants) ════════ -->
+                <div class="yt_card yt_card_active" t-if="state.data.active_downloads.length > 0">
+                    <div class="yt_card_header">
+                        <h6 class="yt_card_title">
+                            <span class="yt_live_dot me-2"/>
+                            <span>Téléchargements en cours</span>
+                        </h6>
+                        <button class="yt_btn yt_btn_sm yt_btn_ghost" t-on-click="onClickInProgress">
+                            Tout voir <i class="fa fa-arrow-right ms-1"/>
+                        </button>
+                    </div>
+                    <div class="yt_card_body p-0">
+                        <div class="yt_active_list">
+                            <t t-foreach="state.data.active_downloads" t-as="dl" t-key="dl.id">
+                                <div class="yt_active_item" t-on-click="() => this.onClickRecord(dl.id)">
+                                    <div class="yt_active_thumb" t-if="dl.thumbnail">
+                                        <img t-att-src="dl.thumbnail" alt="thumb" loading="lazy"/>
+                                    </div>
+                                    <div class="yt_active_thumb yt_active_thumb_placeholder" t-else="">
+                                        <i class="fa fa-play-circle"/>
+                                    </div>
+                                    <div class="yt_active_info">
+                                        <div class="yt_active_name text-truncate">
+                                            <t t-esc="dl.name"/>
+                                        </div>
+                                        <div class="yt_active_meta">
+                                            <span class="badge bg-info"><t t-esc="dl.quality"/></span>
+                                            <span t-attf-class="badge #{dl.state === 'downloading' ? 'bg-success' : 'bg-warning'}">
+                                                <t t-esc="dl.state === 'downloading' ? 'Téléchargement' : 'En attente'"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="yt_active_progress">
+                                        <div class="yt_mini_progress">
+                                            <div class="yt_mini_fill" t-attf-style="width: #{dl.progress}%"/>
+                                        </div>
+                                        <span class="yt_progress_pct"><t t-esc="dl.progress.toFixed(1)"/>%</span>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════ RANGÉE 4 : 3 COLONNES (Qualité, Récents, Erreurs) ════════ -->
+                <div class="yt_dash_row yt_dash_row_3col">
+                    <!-- Qualité et Format -->
+                    <div class="yt_card">
+                        <div class="yt_card_header">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-sliders me-2"/>Qualité &amp; Format
+                            </h6>
+                        </div>
+                        <div class="yt_card_body">
+                            <!-- Qualité -->
+                            <div class="yt_section_mini_title">Par qualité</div>
+                            <div t-if="qualityLabels.length === 0" class="text-muted small">
+                                Aucune donnée
+                            </div>
+                            <t t-foreach="qualityLabels" t-as="item" t-key="item[0]">
+                                <div class="yt_stat_row">
+                                    <span class="yt_stat_badge yt_badge_quality"><t t-esc="item[0]"/></span>
+                                    <div class="yt_stat_bar_wrap">
+                                        <div class="yt_stat_bar_fill yt_fill_quality"
+                                             t-attf-style="width: #{getBarWidth(item[1])}%"/>
+                                    </div>
+                                    <span class="yt_stat_count"><t t-esc="item[1]"/></span>
+                                </div>
+                            </t>
+                            <!-- Format -->
+                            <div class="yt_section_mini_title mt-3">Par format</div>
+                            <div t-if="formatLabels.length === 0" class="text-muted small">
+                                Aucune donnée
+                            </div>
+                            <t t-foreach="formatLabels" t-as="item" t-key="item[0]">
+                                <div class="yt_stat_row">
+                                    <span class="yt_stat_badge yt_badge_format"><t t-esc="item[0]"/></span>
+                                    <div class="yt_stat_bar_wrap">
+                                        <div class="yt_stat_bar_fill yt_fill_format"
+                                             t-attf-style="width: #{getBarWidth(item[1])}%"/>
+                                    </div>
+                                    <span class="yt_stat_count"><t t-esc="item[1]"/></span>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- Derniers terminés -->
+                    <div class="yt_card">
+                        <div class="yt_card_header">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-history me-2"/>Récemment terminés
+                            </h6>
+                            <button class="yt_btn yt_btn_sm yt_btn_ghost" t-on-click="onClickDone">
+                                Tout <i class="fa fa-arrow-right ms-1"/>
+                            </button>
+                        </div>
+                        <div class="yt_card_body p-0">
+                            <div t-if="state.data.recent_completed.length === 0" class="text-muted small text-center p-3">
+                                Aucun téléchargement terminé
+                            </div>
+                            <t t-foreach="state.data.recent_completed" t-as="item" t-key="item.id">
+                                <div class="yt_recent_item" t-on-click="() => this.onClickRecord(item.id)">
+                                    <div class="yt_recent_thumb" t-if="item.thumbnail">
+                                        <img t-att-src="item.thumbnail" alt="thumb" loading="lazy"/>
+                                    </div>
+                                    <div class="yt_recent_thumb yt_recent_thumb_ph" t-else="">
+                                        <i class="fa fa-film"/>
+                                    </div>
+                                    <div class="yt_recent_info">
+                                        <div class="yt_recent_name text-truncate"><t t-esc="item.name"/></div>
+                                        <div class="yt_recent_meta">
+                                            <span><i class="fa fa-user me-1"/><t t-esc="item.author"/></span>
+                                            <span><i class="fa fa-clock-o me-1"/><t t-esc="item.duration"/></span>
+                                            <span><i class="fa fa-save me-1"/><t t-esc="item.size"/></span>
+                                        </div>
+                                    </div>
+                                    <div class="yt_recent_date"><t t-esc="item.date"/></div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- Top Auteurs -->
+                    <div class="yt_card">
+                        <div class="yt_card_header">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-trophy me-2"/>Top Chaînes
+                            </h6>
+                        </div>
+                        <div class="yt_card_body">
+                            <div t-if="topAuthors.length === 0" class="text-muted small text-center">
+                                Aucune donnée
+                            </div>
+                            <t t-foreach="topAuthors" t-as="author" t-key="author[0]">
+                                <div class="yt_author_row">
+                                    <div class="yt_author_rank">
+                                        <span t-attf-class="yt_rank_badge #{author_index === 0 ? 'yt_rank_gold' : (author_index === 1 ? 'yt_rank_silver' : (author_index === 2 ? 'yt_rank_bronze' : ''))}">
+                                            <t t-esc="author_index + 1"/>
+                                        </span>
+                                    </div>
+                                    <div class="yt_author_name text-truncate" t-att-title="author[0]">
+                                        <t t-esc="author[0]"/>
+                                    </div>
+                                    <div class="yt_author_count">
+                                        <span class="yt_count_pill"><t t-esc="author[1]"/></span>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════ RANGÉE 5 : ERREURS RÉCENTES + ACTIONS ════════ -->
+                <div class="yt_dash_row yt_dash_row_bottom">
+                    <!-- Erreurs récentes -->
+                    <div class="yt_card" t-if="state.data.error_list.length > 0">
+                        <div class="yt_card_header yt_card_header_danger">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-exclamation-circle me-2"/>Erreurs récentes
+                            </h6>
+                            <button class="yt_btn yt_btn_sm yt_btn_danger"
+                                    t-on-click="onClickRetryErrors">
+                                <i class="fa fa-repeat me-1"/>Tout relancer
+                            </button>
+                        </div>
+                        <div class="yt_card_body p-0">
+                            <t t-foreach="state.data.error_list" t-as="err" t-key="err.id">
+                                <div class="yt_error_item" t-on-click="() => this.onClickRecord(err.id)">
+                                    <div class="yt_error_icon">
+                                        <i class="fa fa-times-circle"/>
+                                    </div>
+                                    <div class="yt_error_info">
+                                        <div class="yt_error_name text-truncate"><t t-esc="err.name"/></div>
+                                        <div class="yt_error_msg text-truncate"><t t-esc="err.error"/></div>
+                                    </div>
+                                    <div class="yt_error_meta">
+                                        <span class="yt_retry_badge">
+                                            <t t-esc="err.retries"/>/<t t-esc="err.max_retries"/>
+                                        </span>
+                                        <span class="yt_error_date"><t t-esc="err.date"/></span>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- Actions rapides -->
+                    <div class="yt_card yt_card_actions">
+                        <div class="yt_card_header">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-rocket me-2"/>Actions rapides
+                            </h6>
+                        </div>
+                        <div class="yt_card_body">
+                            <div class="yt_actions_grid">
+                                <button class="yt_action_btn yt_action_new"
+                                        t-on-click="onClickNewDownload">
+                                    <i class="fa fa-plus-circle"/>
+                                    <span>Nouveau<br/>téléchargement</span>
+                                </button>
+                                <button class="yt_action_btn yt_action_progress"
+                                        t-on-click="onClickInProgress">
+                                    <i class="fa fa-download"/>
+                                    <span>En cours<br/>(<t t-esc="state.data.in_progress"/>)</span>
+                                </button>
+                                <button class="yt_action_btn yt_action_done"
+                                        t-on-click="onClickDone">
+                                    <i class="fa fa-check-circle"/>
+                                    <span>Terminés<br/>(<t t-esc="state.data.done"/>)</span>
+                                </button>
+                                <button class="yt_action_btn yt_action_drafts"
+                                        t-on-click="onClickDrafts"
+                                        t-if="state.data.drafts > 0">
+                                    <i class="fa fa-pencil-square-o"/>
+                                    <span>Brouillons<br/>(<t t-esc="state.data.drafts"/>)</span>
+                                </button>
+                                <button class="yt_action_btn yt_action_retry"
+                                        t-on-click="onClickRetryErrors"
+                                        t-if="state.data.errors > 0">
+                                    <i class="fa fa-repeat"/>
+                                    <span>Relancer<br/>erreurs (<t t-esc="state.data.errors"/>)</span>
+                                </button>
+                                <button class="yt_action_btn yt_action_all"
+                                        t-on-click="onClickTotal">
+                                    <i class="fa fa-list"/>
+                                    <span>Tout<br/>afficher</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── ÉTAT VIDE ─── -->
+            <div t-if="!state.loading and !state.data" class="yt_empty_state">
+                <div class="yt_empty_icon">
+                    <svg viewBox="0 0 24 24" width="80" height="80" fill="currentColor" opacity="0.2">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                </div>
+                <h3 class="yt_empty_title">Aucune donnée disponible</h3>
+                <p class="yt_empty_desc">Commencez par télécharger votre première vidéo YouTube</p>
+                <button class="yt_btn yt_btn_primary yt_btn_lg" t-on-click="onClickNewDownload">
+                    <i class="fa fa-plus me-2"/>Télécharger ma première vidéo
+                </button>
+            </div>
+        </div>
+    </t>
+
+</templates>
