@@ -350,6 +350,156 @@ class YoutubeDownloaderMobileAPI(http.Controller):
 
         return _json_response(message="Déconnexion réussie")
 
+    # ─── INSCRIPTION ─────────────────────────────────────────────────────
+
+    @http.route('/api/v1/youtube/auth/register', type='http', auth='none',
+                methods=['POST', 'OPTIONS'], csrf=False, cors='*')
+    @api_exception_handler
+    def api_register(self, **kwargs):
+        """Inscription d'un nouvel utilisateur. La demande doit être validée par un admin."""
+        if request.httprequest.method == 'OPTIONS':
+            return _handle_cors_preflight()
+
+        # Rate limiting
+        client_ip = request.httprequest.remote_addr or 'unknown'
+        if not _check_rate_limit(client_ip):
+            return _json_error(
+                message="Trop de tentatives. Réessayez dans une minute.",
+                code='REG_001',
+                status=429,
+            )
+
+        body = _get_json_body()
+        name = body.get('name', '').strip()
+        email = body.get('email', '').strip()
+        phone = body.get('phone', '').strip()
+        password = body.get('password', '').strip()
+
+        # Validations
+        if not name or not email or not password:
+            return _json_error(
+                message="Nom, email et mot de passe sont requis",
+                code='VAL_001',
+                status=400,
+            )
+
+        if len(password) < 6:
+            return _json_error(
+                message="Le mot de passe doit contenir au moins 6 caractères",
+                code='VAL_002',
+                status=400,
+            )
+
+        if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
+            return _json_error(
+                message="Adresse email invalide",
+                code='VAL_003',
+                status=400,
+            )
+
+        RegistrationModel = request.env['youtube.registration'].sudo()
+
+        # Vérifier si cet email existe déjà (inscription ou utilisateur)
+        existing_reg = RegistrationModel.search([
+            ('email', '=', email),
+            ('state', 'in', ['pending', 'approved']),
+        ], limit=1)
+
+        if existing_reg:
+            if existing_reg.state == 'pending':
+                return _json_error(
+                    message="Une demande d'inscription avec cet email est déjà en attente de validation",
+                    code='REG_002',
+                    status=409,
+                )
+            else:
+                return _json_error(
+                    message="Un compte avec cet email existe déjà. Essayez de vous connecter.",
+                    code='REG_003',
+                    status=409,
+                )
+
+        existing_user = request.env['res.users'].sudo().search([
+            '|',
+            ('login', '=', email),
+            ('email', '=', email),
+        ], limit=1)
+
+        if existing_user:
+            return _json_error(
+                message="Un compte avec cet email existe déjà. Essayez de vous connecter.",
+                code='REG_004',
+                status=409,
+            )
+
+        try:
+            RegistrationModel.create({
+                'name': name,
+                'email': email,
+                'phone': phone,
+                'password_hash': password,  # sera hashé à la création de l'utilisateur
+                'ip_address': client_ip,
+                'state': 'pending',
+            })
+        except Exception as e:
+            _logger.error("Erreur création inscription : %s", str(e))
+            return _json_error(
+                message="Erreur lors de l'inscription. Veuillez réessayer.",
+                code='REG_005',
+                status=500,
+            )
+
+        return _json_response(
+            message="Votre demande d'inscription a été envoyée avec succès. "
+                    "Vous recevrez un email dès qu'elle sera validée par un administrateur.",
+        )
+
+    # ─── VÉRIFICATION STATUT INSCRIPTION ─────────────────────────────────
+
+    @http.route('/api/v1/youtube/auth/registration-status', type='http', auth='none',
+                methods=['POST', 'OPTIONS'], csrf=False, cors='*')
+    @api_exception_handler
+    def api_registration_status(self, **kwargs):
+        """Vérifie le statut d'une demande d'inscription par email."""
+        if request.httprequest.method == 'OPTIONS':
+            return _handle_cors_preflight()
+
+        body = _get_json_body()
+        email = body.get('email', '').strip()
+
+        if not email:
+            return _json_error(
+                message="Email requis",
+                code='VAL_001',
+                status=400,
+            )
+
+        registration = request.env['youtube.registration'].sudo().search([
+            ('email', '=', email),
+        ], order='create_date desc', limit=1)
+
+        if not registration:
+            return _json_response(data={
+                'status': 'not_found',
+                'message': "Aucune demande d'inscription trouvée pour cet email.",
+            })
+
+        status_messages = {
+            'pending': "Votre demande est en cours de validation par un administrateur.",
+            'approved': "Votre inscription a été approuvée ! Vous pouvez vous connecter.",
+            'rejected': "Votre demande a été refusée.",
+        }
+
+        data = {
+            'status': registration.state,
+            'message': status_messages.get(registration.state, ''),
+        }
+
+        if registration.state == 'rejected' and registration.rejection_reason:
+            data['rejection_reason'] = registration.rejection_reason
+
+        return _json_response(data=data)
+
     # ─── INFOS VIDÉO ─────────────────────────────────────────────────────
 
     @http.route('/api/v1/youtube/video/info', type='http', auth='none',

@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../providers/auth_provider.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -213,7 +214,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         )
                       : const Text('Se connecter'),
                 ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2),
+                const SizedBox(height: 16),
 
+                // Lien inscription
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const RegisterScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text.rich(
+                    TextSpan(
+                      text: 'Pas encore de compte ? ',
+                      style: TextStyle(color: AppColors.textSecondary),
+                      children: [
+                        TextSpan(
+                          text: 'Créer un compte',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 800.ms),
                 const SizedBox(height: 24),
 
                 // Version

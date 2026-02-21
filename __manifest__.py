@@ -44,6 +44,7 @@ Module complet de téléchargement YouTube avec :
         'data/ir_config_parameter.xml',
         'data/server_actions.xml',
         'views/youtube_download_views.xml',
+        'views/youtube_registration_views.xml',
         'views/res_config_settings_views.xml',
         'wizard/youtube_download_wizard_views.xml',
         'views/menu_views.xml',

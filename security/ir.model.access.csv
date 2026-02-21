@@ -6,3 +6,5 @@ access_youtube_download_tag_manager,youtube.download.tag manager,model_youtube_d
 access_youtube_download_wizard_user,youtube.download.wizard user,model_youtube_download_wizard,group_youtube_user,1,1,1,1
 access_youtube_api_token_user,youtube.api.token user,model_youtube_api_token,group_youtube_user,1,0,0,0
 access_youtube_api_token_manager,youtube.api.token manager,model_youtube_api_token,group_youtube_manager,1,1,1,1
+access_youtube_registration_manager,youtube.registration manager,model_youtube_registration,group_youtube_manager,1,1,1,1
+access_youtube_registration_reject_wizard_manager,youtube.registration.reject.wizard manager,model_youtube_registration_reject_wizard,group_youtube_manager,1,1,1,1

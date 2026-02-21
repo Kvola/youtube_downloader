@@ -71,6 +71,8 @@ class AppConstants {
   static const String apiBase = '/api/v1/youtube';
   static const String loginEndpoint = '$apiBase/auth/login';
   static const String logoutEndpoint = '$apiBase/auth/logout';
+  static const String registerEndpoint = '$apiBase/auth/register';
+  static const String registrationStatusEndpoint = '$apiBase/auth/registration-status';
   static const String videoInfoEndpoint = '$apiBase/video/info';
   static const String createDownloadEndpoint = '$apiBase/download/create';
   static const String downloadsEndpoint = '$apiBase/downloads';

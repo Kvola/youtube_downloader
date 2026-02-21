@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══ Vues de la demande d'inscription ═══ -->
+
+    <!-- Vue formulaire -->
+    <record id="view_youtube_registration_form" model="ir.ui.view">
+        <field name="name">youtube.registration.form</field>
+        <field name="model">youtube.registration</field>
+        <field name="arch" type="xml">
+            <form string="Demande d'inscription">
+                <header>
+                    <button name="action_approve"
+                            string="✅ Approuver"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'pending'"
+                            confirm="Êtes-vous sûr de vouloir approuver cette inscription ? Un compte utilisateur sera créé."/>
+                    <button name="action_reject"
+                            string="❌ Refuser"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state != 'pending'"/>
+                    <button name="action_reset_to_pending"
+                            string="🔄 Remettre en attente"
+                            type="object"
+                            invisible="state == 'pending'"
+                            groups="youtube_downloader.group_youtube_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pending,approved,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="state != 'pending'"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Informations personnelles">
+                            <field name="email" readonly="state != 'pending'"/>
+                            <field name="phone" readonly="state != 'pending'"/>
+                            <field name="registration_date"/>
+                            <field name="ip_address"/>
+                        </group>
+                        <group string="Validation">
+                            <field name="validation_date" invisible="state == 'pending'"/>
+                            <field name="validated_by" invisible="state == 'pending'"/>
+                            <field name="user_id" invisible="state != 'approved'"/>
+                            <field name="rejection_reason" invisible="state != 'rejected'"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue liste -->
+    <record id="view_youtube_registration_tree" model="ir.ui.view">
+        <field name="name">youtube.registration.tree</field>
+        <field name="model">youtube.registration</field>
+        <field name="arch" type="xml">
+            <tree string="Demandes d'inscription"
+                  decoration-warning="state == 'pending'"
+                  decoration-success="state == 'approved'"
+                  decoration-danger="state == 'rejected'">
+                <field name="registration_date" string="Date"/>
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="state" widget="badge"
+                       decoration-warning="state == 'pending'"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'rejected'"/>
+                <field name="validated_by" optional="show"/>
+                <field name="validation_date" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue recherche -->
+    <record id="view_youtube_registration_search" model="ir.ui.view">
+        <field name="name">youtube.registration.search</field>
+        <field name="model">youtube.registration</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher une inscription">
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <filter string="En attente" name="pending"
+                        domain="[('state', '=', 'pending')]"/>
+                <filter string="Approuvées" name="approved"
+                        domain="[('state', '=', 'approved')]"/>
+                <filter string="Refusées" name="rejected"
+                        domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Statut" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Date" name="group_date"
+                            context="{'group_by': 'registration_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action : toutes les inscriptions -->
+    <record id="action_youtube_registration" model="ir.actions.act_window">
+        <field name="name">Demandes d'inscription</field>
+        <field name="res_model">youtube.registration</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_youtube_registration_search"/>
+        <field name="context">{'search_default_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune demande d'inscription
+            </p>
+            <p>Les utilisateurs peuvent s'inscrire depuis l'application mobile.</p>
+        </field>
+    </record>
+
+    <!-- ═══ Wizard de refus ═══ -->
+
+    <record id="view_youtube_registration_reject_wizard_form" model="ir.ui.view">
+        <field name="name">youtube.registration.reject.wizard.form</field>
+        <field name="model">youtube.registration.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Refuser l'inscription">
+                <group>
+                    <field name="registration_id" invisible="1"/>
+                    <field name="reason" placeholder="Saisissez le motif du refus..."/>
+                </group>
+                <footer>
+                    <button name="action_confirm_reject"
+                            string="Confirmer le refus"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Annuler" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

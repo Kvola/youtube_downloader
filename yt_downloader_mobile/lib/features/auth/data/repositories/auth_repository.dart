@@ -65,6 +65,58 @@ class AuthRepository {
     await _storage.clearAll();
   }
 
+  /// Inscription d'un nouvel utilisateur
+  Future<String> register({
+    required String serverUrl,
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    // Configurer l'URL du serveur
+    await _storage.saveServerUrl(serverUrl);
+    _api.setBaseUrl(serverUrl);
+
+    final response = await _api.post(
+      AppConstants.registerEndpoint,
+      data: {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'password': password,
+      },
+    );
+
+    if (response['success'] != true) {
+      final error = response['error'];
+      throw Exception(
+        error is Map ? error['message'] : "Échec de l'inscription",
+      );
+    }
+
+    return response['message'] as String? ??
+        "Votre demande d'inscription a été envoyée avec succès.";
+  }
+
+  /// Vérifier le statut d'une inscription
+  Future<Map<String, dynamic>> checkRegistrationStatus({
+    required String serverUrl,
+    required String email,
+  }) async {
+    _api.setBaseUrl(serverUrl);
+
+    final response = await _api.post(
+      AppConstants.registrationStatusEndpoint,
+      data: {'email': email},
+    );
+
+    if (response['success'] != true) {
+      throw Exception("Impossible de vérifier le statut");
+    }
+
+    return response['data'] as Map<String, dynamic>;
+  }
+
   /// Vérifier si l'utilisateur est connecté
   Future<User?> getCurrentUser() async {
     final token = await _storage.getToken();
