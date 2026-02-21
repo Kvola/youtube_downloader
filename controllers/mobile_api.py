@@ -390,6 +390,15 @@ class YoutubeDownloaderMobileAPI(http.Controller):
             'skip_download': True,
         }
 
+        # Ajouter les cookies si configuré
+        cookie_file = request.env['ir.config_parameter'].sudo().get_param(
+            'youtube_downloader.cookie_file', ''
+        )
+        if cookie_file:
+            import os
+            if os.path.isfile(cookie_file):
+                ydl_opts['cookiefile'] = cookie_file
+
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)

@@ -63,6 +63,13 @@ class ResConfigSettings(models.TransientModel):
         default=True,
         help="Réessayer automatiquement en cas d'erreur réseau.",
     )
+    youtube_cookie_file = fields.Char(
+        string='Fichier de cookies YouTube',
+        config_parameter='youtube_downloader.cookie_file',
+        help="Chemin absolu vers le fichier cookies.txt (format Netscape). "
+             "Nécessaire pour contourner la détection anti-bot de YouTube. "
+             "Exportez vos cookies depuis un navigateur connecté à YouTube.",
+    )
     youtube_ytdlp_version = fields.Char(
         string='Version yt-dlp installée',
         compute='_compute_ytdlp_version',
@@ -166,4 +173,45 @@ class ResConfigSettings(models.TransientModel):
         except Exception as e:
             raise UserError(_(
                 "Impossible d'installer yt-dlp :\n%s", str(e),
+            ))
+
+    def action_test_cookie_file(self):
+        """Teste l'accès au fichier de cookies YouTube."""
+        self.ensure_one()
+        import os
+        path = self.youtube_cookie_file
+        if not path:
+            raise UserError(_("Veuillez d'abord saisir le chemin du fichier de cookies."))
+        if not os.path.isfile(path):
+            raise UserError(_(
+                "Le fichier '%s' n'existe pas.\n\n"
+                "Pour créer ce fichier :\n"
+                "1. Installez l'extension 'Get cookies.txt LOCALLY' dans votre navigateur\n"
+                "2. Connectez-vous à YouTube\n"
+                "3. Exportez les cookies au format Netscape\n"
+                "4. Copiez le fichier sur le serveur", path,
+            ))
+        try:
+            with open(path, 'r') as f:
+                content = f.read(1024)
+            if '# Netscape HTTP Cookie File' not in content and '# HTTP Cookie File' not in content and '.youtube.com' not in content:
+                raise UserError(_(
+                    "Le fichier ne semble pas être un fichier de cookies valide (format Netscape).\n"
+                    "La première ligne doit contenir '# Netscape HTTP Cookie File'."
+                ))
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Fichier de cookies valide'),
+                    'message': _('Le fichier de cookies est accessible et semble valide.'),
+                    'type': 'success',
+                    'sticky': False,
+                },
+            }
+        except UserError:
+            raise
+        except Exception as e:
+            raise UserError(_(
+                "Erreur de lecture du fichier '%s' :\n%s", path, str(e),
             ))

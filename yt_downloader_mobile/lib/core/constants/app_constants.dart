@@ -23,7 +23,7 @@ class ServerConfig {
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'YT Downloader';
+  static const String appName = 'Youtube Downloader';
   static const String appVersion = '1.0.0';
 
   // Clés de stockage local
@@ -31,7 +31,7 @@ class AppConstants {
   static const String userKey = 'user_data';
   static const String serverUrlKey = 'server_url';
   static const String serverConfigKey = 'server_config_key';
-  static const String defaultServerUrl = 'http://192.168.100.8:8069';
+  static const String defaultServerUrl = 'https://ebng.kavola.site';
 
   // Configurations serveur prédéfinies
   static const List<ServerConfig> serverConfigs = [

@@ -417,6 +417,15 @@ class YoutubeDownload(models.Model):
                 "Puis redémarrer le serveur Odoo."
             ))
 
+    def _get_cookie_opts(self):
+        """Retourne les options de cookies pour yt-dlp si configuré."""
+        cookie_file = self.env['ir.config_parameter'].sudo().get_param(
+            'youtube_downloader.cookie_file', ''
+        )
+        if cookie_file and os.path.isfile(cookie_file):
+            return {'cookiefile': cookie_file}
+        return {}
+
     def _get_format_string(self):
         """Construit la chaîne de format yt-dlp selon la qualité choisie."""
         format_map = {
@@ -505,6 +514,7 @@ class YoutubeDownload(models.Model):
             'skip_download': True,
             'extract_flat': self._is_playlist_url(self.url),
         }
+        ydl_opts.update(self._get_cookie_opts())
         if self.use_proxy and self.proxy_url:
             ydl_opts['proxy'] = self.proxy_url
 
@@ -645,6 +655,7 @@ class YoutubeDownload(models.Model):
             'skip_download': True,
             'extract_flat': True,
         }
+        ydl_opts.update(self._get_cookie_opts())
         if self.use_proxy and self.proxy_url:
             ydl_opts['proxy'] = self.proxy_url
 
@@ -787,6 +798,7 @@ class YoutubeDownload(models.Model):
             'http_chunk_size': 10485760,  # 10 Mo
             'continuedl': True,
         }
+        ydl_opts.update(self._get_cookie_opts())
 
         # Post-traitement selon format
         postprocessors = []
