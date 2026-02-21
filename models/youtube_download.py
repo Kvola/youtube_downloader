@@ -225,6 +225,21 @@ class YoutubeDownload(models.Model):
         ('3', 'Urgente'),
     ], string='Priorité', default='0', index=True)
 
+    # ─── Listes de lecture ─────────────────────────────────────────────────────
+    in_playlist_item_ids = fields.One2many(
+        'youtube.playlist.item',
+        'download_id',
+        string='Éléments de playlists',
+    )
+    in_playlist_count = fields.Integer(
+        string='Dans listes de lecture',
+        compute='_compute_in_playlist',
+    )
+    in_playlist_names = fields.Char(
+        string='Listes de lecture',
+        compute='_compute_in_playlist',
+    )
+
     # ─── Champs calculés ──────────────────────────────────────────────────────
     effective_path = fields.Char(
         string='Répertoire effectif',
@@ -323,6 +338,17 @@ class YoutubeDownload(models.Model):
     def _compute_file_exists(self):
         for rec in self:
             rec.file_exists = bool(rec.file_path and os.path.exists(rec.file_path))
+
+    def _compute_in_playlist(self):
+        """Calcule le nombre de playlists contenant ce téléchargement."""
+        PlaylistItem = self.env['youtube.playlist.item']
+        for rec in self:
+            items = PlaylistItem.search([
+                ('download_id', '=', rec.id),
+            ])
+            playlists = items.mapped('playlist_id')
+            rec.in_playlist_count = len(playlists)
+            rec.in_playlist_names = ', '.join(playlists.mapped('name')) if playlists else ''
 
     @api.depends('file_size', 'download_duration')
     def _compute_download_speed(self):
@@ -1054,6 +1080,39 @@ class YoutubeDownload(models.Model):
             },
         }
 
+    def action_play_video(self):
+        """Ouvre le lecteur vidéo intégré (mode cinéma) pour lire le fichier téléchargé."""
+        self.ensure_one()
+        if self.state != 'done':
+            raise UserError(_("Le téléchargement n'est pas encore terminé."))
+        if not self.file_path:
+            raise UserError(_("Aucun fichier téléchargé pour cet enregistrement."))
+        if not os.path.exists(self.file_path):
+            raise UserError(_(
+                "Le fichier '%s' n'existe plus sur le disque.", self.file_path,
+            ))
+
+        # Déterminer si c'est un fichier audio ou vidéo
+        ext = os.path.splitext(self.file_path)[1].lower()
+        is_audio = ext in ('.mp3', '.wav', '.m4a', '.ogg')
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'youtube_video_player',
+            'name': _('🎬 %s', self.name or self.video_title or self.reference),
+            'context': {
+                'active_id': self.id,
+                'record_name': self.name or self.video_title or self.reference,
+                'is_audio': is_audio,
+                'stream_url': f'/youtube_downloader/stream/{self.id}',
+                'thumbnail_url': self.video_thumbnail_url or '',
+                'video_author': self.video_author or '',
+                'video_duration': self.video_duration_display or '',
+                'file_size': self.file_size_display or '',
+                'quality': self.quality or '',
+            },
+        }
+
     def action_delete_file(self):
         """Supprime le fichier physique du disque."""
         self.ensure_one()
@@ -1079,6 +1138,59 @@ class YoutubeDownload(models.Model):
             raise UserError(_(
                 "Le fichier '%s' n'existe pas sur le disque.", self.file_path,
             ))
+
+    def action_view_in_playlists(self):
+        """Ouvre les playlists contenant ce téléchargement."""
+        self.ensure_one()
+        items = self.env['youtube.playlist.item'].search([
+            ('download_id', '=', self.id),
+        ])
+        playlist_ids = items.mapped('playlist_id').ids
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Listes de lecture'),
+            'res_model': 'youtube.playlist',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', playlist_ids)],
+            'target': 'current',
+        }
+
+    def action_add_to_playlist(self):
+        """Ouvre le sélecteur de liste de lecture pour y ajouter ce média."""
+        self.ensure_one()
+        if self.state != 'done':
+            raise UserError(_("Le téléchargement n'est pas terminé."))
+        playlists = self.env['youtube.playlist'].search([
+            ('user_id', '=', self.env.uid),
+        ], order='write_date desc')
+        if not playlists:
+            # Créer une playlist par défaut et y ajouter le média
+            playlist = self.env['youtube.playlist'].create({
+                'name': _('Ma liste de lecture'),
+            })
+            self.env['youtube.playlist.item'].create({
+                'playlist_id': playlist.id,
+                'download_id': self.id,
+                'sequence': 10,
+            })
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'youtube.playlist',
+                'res_id': playlist.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        # Ouvrir le wizard pour choisir une playlist
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Ajouter à une liste de lecture'),
+            'res_model': 'youtube.playlist.add.download.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_download_id': self.id,
+            },
+        }
 
     def action_view_playlist_items(self):
         """Ouvre la liste des vidéos de la playlist."""

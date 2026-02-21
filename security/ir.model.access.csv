@@ -8,3 +8,9 @@ access_youtube_api_token_user,youtube.api.token user,model_youtube_api_token,gro
 access_youtube_api_token_manager,youtube.api.token manager,model_youtube_api_token,group_youtube_manager,1,1,1,1
 access_youtube_registration_manager,youtube.registration manager,model_youtube_registration,group_youtube_manager,1,1,1,1
 access_youtube_registration_reject_wizard_manager,youtube.registration.reject.wizard manager,model_youtube_registration_reject_wizard,group_youtube_manager,1,1,1,1
+access_youtube_playlist_user,youtube.playlist user,model_youtube_playlist,group_youtube_user,1,1,1,0
+access_youtube_playlist_manager,youtube.playlist manager,model_youtube_playlist,group_youtube_manager,1,1,1,1
+access_youtube_playlist_item_user,youtube.playlist.item user,model_youtube_playlist_item,group_youtube_user,1,1,1,1
+access_youtube_playlist_item_manager,youtube.playlist.item manager,model_youtube_playlist_item,group_youtube_manager,1,1,1,1
+access_youtube_playlist_add_wizard_user,youtube.playlist.add.wizard user,model_youtube_playlist_add_wizard,group_youtube_user,1,1,1,1
+access_youtube_playlist_add_download_wizard_user,youtube.playlist.add.download.wizard user,model_youtube_playlist_add_download_wizard,group_youtube_user,1,1,1,1

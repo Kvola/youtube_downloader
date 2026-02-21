@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Lecteur Vidéo / Audio Professionnel (mode cinéma)
+    ════════════════════════════════════════════════════════════ -->
+    <t t-name="youtube_downloader.VideoPlayerDialog">
+        <div t-ref="playerContainer"
+             t-attf-class="yt_player_container #{state.showControls ? '' : 'yt_controls_hidden'} #{state.isFullscreen ? 'yt_fullscreen' : ''}"
+             t-on-mousemove="onContainerMouseMove"
+             t-on-mouseleave="onContainerMouseLeave">
+
+            <!-- Zone de lecture -->
+            <div class="yt_player_media_wrapper">
+
+                <!-- Spinner de chargement -->
+                <div t-if="state.isLoading" class="yt_player_loading">
+                    <div class="yt_player_spinner">
+                        <div class="yt_player_spinner_ring"/>
+                    </div>
+                </div>
+
+                <!-- Message d'erreur -->
+                <div t-if="state.hasError" class="yt_player_error">
+                    <div class="yt_player_error_card">
+                        <div class="yt_player_error_icon_wrap">
+                            <i class="fa fa-exclamation-triangle" title="Erreur"/>
+                        </div>
+                        <h4 class="yt_player_error_title">Impossible de lire ce média</h4>
+                        <p class="yt_player_error_text" t-esc="state.errorMessage"/>
+                        <p class="yt_player_error_hint">
+                            Certains formats (MKV, WAV) peuvent ne pas être
+                            supportés par votre navigateur.
+                        </p>
+                        <button class="yt_player_error_btn" t-on-click="onDownload">
+                            <i class="fa fa-download me-2"/>Télécharger le fichier
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lecteur Vidéo -->
+                <video t-if="!props.isAudio"
+                       t-ref="mediaPlayer"
+                       class="yt_player_video"
+                       t-att-src="streamUrl"
+                       t-att-poster="props.thumbnailUrl || ''"
+                       preload="metadata"
+                       t-on-click="togglePlay"
+                       t-on-dblclick="onVideoDblClick"
+                       playsinline="true">
+                    Votre navigateur ne supporte pas la lecture vidéo HTML5.
+                </video>
+
+                <!-- Lecteur Audio (avec pochette animée) -->
+                <t t-if="props.isAudio">
+                    <div class="yt_player_audio_visual">
+                        <div class="yt_player_audio_disc_wrapper">
+                            <div t-attf-class="yt_player_audio_disc #{state.isPlaying ? 'spinning' : ''}">
+                                <img t-if="props.thumbnailUrl"
+                                     t-att-src="props.thumbnailUrl"
+                                     class="yt_player_audio_cover"
+                                     alt="Couverture audio"/>
+                                <div t-else="" class="yt_player_audio_placeholder">
+                                    <i class="fa fa-music" title="Audio"/>
+                                </div>
+                                <div class="yt_player_audio_disc_hole"/>
+                            </div>
+                        </div>
+                        <div t-if="state.isPlaying" class="yt_player_audio_visualizer">
+                            <div class="yt_player_bar"/>
+                            <div class="yt_player_bar"/>
+                            <div class="yt_player_bar"/>
+                            <div class="yt_player_bar"/>
+                            <div class="yt_player_bar"/>
+                            <div class="yt_player_bar"/>
+                            <div class="yt_player_bar"/>
+                        </div>
+                    </div>
+                    <audio t-ref="mediaPlayer"
+                           t-att-src="streamUrl"
+                           preload="metadata">
+                        Votre navigateur ne supporte pas la lecture audio HTML5.
+                    </audio>
+                </t>
+
+                <!-- Overlay bouton play (vidéo uniquement) -->
+                <div t-if="!props.isAudio and !state.isPlaying and !state.isLoading and !state.hasError"
+                     class="yt_player_play_overlay" t-on-click="togglePlay">
+                    <div class="yt_player_play_btn_big">
+                        <i class="fa fa-play"/>
+                    </div>
+                </div>
+
+                <!-- Gradient bottom (vidéo : fondu vers contrôles) -->
+                <div t-if="!props.isAudio and !state.hasError" class="yt_player_gradient_bottom"/>
+            </div>
+
+            <!-- Contrôles du lecteur -->
+            <div t-attf-class="yt_player_controls #{state.hasError ? 'd-none' : ''}">
+                <!-- Barre de progression avancée -->
+                <div class="yt_player_progress_wrapper"
+                     t-on-click="onSeek"
+                     t-on-mousemove="onProgressHover"
+                     t-on-mouseleave="onProgressLeave"
+                     t-ref="progressBar">
+                    <!-- Fond -->
+                    <div class="yt_player_progress_track">
+                        <!-- Buffer -->
+                        <div class="yt_player_progress_buffer"
+                             t-attf-style="width: #{state.buffered}%"/>
+                        <!-- Progression -->
+                        <div class="yt_player_progress_fill"
+                             t-attf-style="width: #{state.progress}%">
+                            <div class="yt_player_progress_thumb"/>
+                        </div>
+                    </div>
+                    <!-- Hover time tooltip -->
+                    <div t-if="state.showHoverTime"
+                         class="yt_player_hover_time"
+                         t-attf-style="left: #{state.hoverPosition}%">
+                        <t t-esc="state.hoverTime"/>
+                    </div>
+                </div>
+
+                <!-- Barre de contrôles -->
+                <div class="yt_player_controls_row">
+                    <!-- Gauche: Prev, Play, Next, Skip, Temps -->
+                    <div class="yt_player_controls_left">
+                        <!-- Previous track (playlist only) -->
+                        <button t-if="props.isPlaylist" class="yt_player_btn"
+                                t-on-click="() => this.props.onPrevTrack &amp;&amp; this.props.onPrevTrack()"
+                                t-att-disabled="!props.hasPrev"
+                                title="Piste précédente (P)">
+                            <i class="fa fa-step-backward" title="Précédent"/>
+                        </button>
+                        <button class="yt_player_btn" t-on-click="skipBackward" title="Reculer de 10s (J)">
+                            <i class="fa fa-backward" title="Reculer"/>
+                        </button>
+                        <button class="yt_player_btn yt_player_btn_play" t-on-click="togglePlay"
+                                t-att-title="state.isPlaying ? 'Pause (K)' : 'Lecture (K)'">
+                            <i t-attf-class="fa #{state.isPlaying ? 'fa-pause' : 'fa-play'}" title="Lecture/Pause"/>
+                        </button>
+                        <button class="yt_player_btn" t-on-click="skipForward" title="Avancer de 10s (L)">
+                            <i class="fa fa-forward" title="Avancer"/>
+                        </button>
+                        <!-- Next track (playlist only) -->
+                        <button t-if="props.isPlaylist" class="yt_player_btn"
+                                t-on-click="() => this.props.onNextTrack &amp;&amp; this.props.onNextTrack()"
+                                t-att-disabled="!props.hasNext"
+                                title="Piste suivante (N)">
+                            <i class="fa fa-step-forward" title="Suivant"/>
+                        </button>
+                        <span class="yt_player_time">
+                            <span class="yt_player_time_current"><t t-esc="state.currentTime"/></span>
+                            <span class="yt_player_time_sep">/</span>
+                            <span class="yt_player_time_total"><t t-esc="state.totalTime"/></span>
+                        </span>
+                    </div>
+
+                    <!-- Droite: Volume, Vitesse, PiP, Plein écran, Télécharger -->
+                    <div class="yt_player_controls_right">
+                        <!-- Volume -->
+                        <div class="yt_player_volume_group">
+                            <button class="yt_player_btn" t-on-click="toggleMute" title="Sourdine (M)">
+                                <i t-attf-class="fa #{volumeIcon}" title="Volume"/>
+                            </button>
+                            <div class="yt_player_volume_slider_wrap">
+                                <input type="range" class="yt_player_volume_slider"
+                                       min="0" max="1" step="0.02"
+                                       t-att-value="state.volume"
+                                       t-on-input="onVolumeChange"/>
+                            </div>
+                        </div>
+
+                        <!-- Vitesse de lecture -->
+                        <div class="yt_player_speed">
+                            <button class="yt_player_btn yt_player_btn_speed"
+                                    t-on-click="toggleSpeedMenu"
+                                    title="Vitesse (&lt; &gt;)">
+                                <span t-esc="state.playbackRate + 'x'"/>
+                            </button>
+                            <div t-if="state.showSpeedMenu" class="yt_player_speed_panel">
+                                <div class="yt_player_speed_panel_title">Vitesse de lecture</div>
+                                <t t-foreach="playbackRates" t-as="rate" t-key="rate">
+                                    <button t-attf-class="yt_player_speed_option #{state.playbackRate === rate ? 'active' : ''}"
+                                            t-on-click="() => this.setPlaybackRate(rate)">
+                                        <span t-esc="rate + 'x'"/>
+                                        <i t-if="state.playbackRate === rate" class="fa fa-check" title="Sélectionné"/>
+                                    </button>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Picture-in-Picture -->
+                        <button t-if="pipSupported" class="yt_player_btn"
+                                t-on-click="togglePiP"
+                                t-att-title="state.isPiP ? 'Quitter PiP (Shift+P)' : 'Picture-in-Picture (Shift+P)'">
+                            <i class="fa fa-window-restore" title="Picture-in-Picture"/>
+                        </button>
+
+                        <!-- Plein écran (vidéo seulement) -->
+                        <button t-if="!props.isAudio" class="yt_player_btn"
+                                t-on-click="toggleFullscreen"
+                                t-att-title="state.isFullscreen ? 'Quitter plein écran (F)' : 'Plein écran (F)'">
+                            <i t-attf-class="fa #{state.isFullscreen ? 'fa-compress' : 'fa-expand'}" title="Plein écran"/>
+                        </button>
+
+                        <!-- Télécharger -->
+                        <button class="yt_player_btn" t-on-click="onDownload" title="Télécharger le fichier">
+                            <i class="fa fa-download" title="Télécharger"/>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Infos vidéo -->
+            <div class="yt_player_info">
+                <div class="yt_player_info_title" t-esc="props.recordName"/>
+                <div class="yt_player_info_meta">
+                    <span t-if="props.videoAuthor" class="yt_player_info_chip">
+                        <i class="fa fa-user" title="Auteur"/> <t t-esc="props.videoAuthor"/>
+                    </span>
+                    <span t-if="props.videoDuration" class="yt_player_info_chip">
+                        <i class="fa fa-clock-o" title="Durée"/> <t t-esc="props.videoDuration"/>
+                    </span>
+                    <span t-if="props.fileSize" class="yt_player_info_chip">
+                        <i class="fa fa-hdd-o" title="Taille"/> <t t-esc="props.fileSize"/>
+                    </span>
+                    <span t-if="props.quality" class="yt_player_info_chip">
+                        <i class="fa fa-diamond" title="Qualité"/> <t t-esc="props.quality"/>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Raccourcis clavier aide (invisible, pour accessibilité) -->
+            <div class="visually-hidden" role="note">
+                Raccourcis : Espace/K=Lecture, J=Reculer, L=Avancer, M=Sourdine, F=Plein écran, ↑↓=Volume, 0-9=Position
+            </div>
+        </div>
+    </t>
+
+    <!-- ═════════════════════════════════════════════
+         Action client : mode théâtre (pleine page)
+    ═════════════════════════════════════════════ -->
+    <t t-name="youtube_downloader.VideoPlayerAction">
+        <div class="yt_theater_wrapper">
+            <!-- Barre de titre avec retour -->
+            <div class="yt_theater_header">
+                <button class="yt_theater_back_btn" t-on-click="goBack"
+                        title="Retour">
+                    <i class="fa fa-arrow-left me-2" title="Retour"/>
+                    <span>Retour</span>
+                </button>
+                <div t-if="state.recordData" class="yt_theater_title">
+                    <t t-esc="state.recordData.name"/>
+                </div>
+                <div class="yt_theater_spacer"/>
+                <!-- Playlist controls in header -->
+                <t t-if="state.isPlaylistMode">
+                    <div class="yt_theater_playlist_controls">
+                        <button t-attf-class="yt_theater_ctrl_btn #{state.autoPlay ? 'yt_playlist_active' : ''}"
+                                t-on-click="toggleAutoPlay"
+                                t-att-title="state.autoPlay ? 'Lecture continue : activée' : 'Lecture continue : désactivée'">
+                            <i t-attf-class="fa #{state.autoPlay ? 'fa-forward' : 'fa-pause'}" title="Lecture continue"/>
+                        </button>
+                        <button t-attf-class="yt_theater_ctrl_btn #{state.shuffle ? 'yt_playlist_active' : ''}"
+                                t-on-click="toggleShuffle"
+                                t-att-title="state.shuffle ? 'Aléatoire : activé' : 'Aléatoire : désactivé'">
+                            <i class="fa fa-random" title="Aléatoire"/>
+                        </button>
+                        <button t-att-class="repeatButtonClass"
+                                t-on-click="toggleRepeat"
+                                t-att-title="repeatTitle">
+                            <i class="fa fa-repeat" title="Répéter"/>
+                            <span t-if="state.repeatMode === 'one'" class="yt_repeat_one_badge">1</span>
+                        </button>
+                        <button t-attf-class="yt_theater_ctrl_btn #{state.showPlaylistPanel ? 'yt_playlist_active' : ''}"
+                                t-on-click="togglePlaylistPanel"
+                                title="Afficher/masquer la liste de lecture">
+                            <i class="fa fa-list-ul" title="Liste de lecture"/>
+                            <span class="yt_playlist_count_badge"
+                                  t-esc="state.playlistTracks.length"/>
+                        </button>
+                    </div>
+                </t>
+            </div>
+
+            <!-- Contenu principal (player + sidebar) -->
+            <div t-attf-class="yt_theater_body #{state.isPlaylistMode and state.showPlaylistPanel ? 'yt_theater_with_sidebar' : ''}">
+                <!-- Player area -->
+                <div class="yt_theater_content">
+                    <t t-if="state.loaded and state.recordData">
+                        <YoutubeVideoPlayer
+                            close="close"
+                            recordId="state.recordData.id"
+                            recordName="state.recordData.name"
+                            isAudio="state.recordData.isAudio"
+                            thumbnailUrl="state.recordData.thumbnailUrl"
+                            videoAuthor="state.recordData.videoAuthor"
+                            videoDuration="state.recordData.videoDuration"
+                            fileSize="state.recordData.fileSize"
+                            quality="state.recordData.quality"
+                            isPlaylist="state.isPlaylistMode"
+                            autoPlay="state.shouldAutoPlay"
+                            hasNext="hasNext"
+                            hasPrev="hasPrev"
+                            onTrackEnded.bind="onTrackEnded"
+                            onNextTrack.bind="nextTrack"
+                            onPrevTrack.bind="prevTrack"/>
+                    </t>
+                    <div t-if="!state.loaded or !state.recordData" class="yt_theater_loading">
+                        <div class="yt_player_spinner">
+                            <div class="yt_player_spinner_ring"/>
+                        </div>
+                        <p class="mt-4 text-muted">Chargement du lecteur...</p>
+                    </div>
+
+                    <!-- Auto-next countdown overlay -->
+                    <div t-if="state.autoNextCountdown > 0 and nextUpTrack"
+                         class="yt_auto_next_overlay">
+                        <div class="yt_auto_next_card">
+                            <div class="yt_auto_next_header">
+                                <span class="yt_auto_next_label">Lecture suivante dans</span>
+                                <span class="yt_auto_next_countdown" t-esc="state.autoNextCountdown"/>
+                            </div>
+                            <div class="yt_auto_next_track">
+                                <div class="yt_auto_next_thumb">
+                                    <img t-if="nextUpTrack.thumbnail_url"
+                                         t-att-src="nextUpTrack.thumbnail_url"
+                                         alt="Suivant"
+                                         class="yt_auto_next_img"/>
+                                    <div t-else="" class="yt_auto_next_img_placeholder">
+                                        <i t-attf-class="fa #{nextUpTrack.is_audio ? 'fa-music' : 'fa-film'}" title="Média"/>
+                                    </div>
+                                </div>
+                                <div class="yt_auto_next_info">
+                                    <div class="yt_auto_next_name" t-esc="nextUpTrack.name"/>
+                                    <div t-if="nextUpTrack.video_author" class="yt_auto_next_author text-muted"
+                                         t-esc="nextUpTrack.video_author"/>
+                                </div>
+                            </div>
+                            <div class="yt_auto_next_actions">
+                                <button class="yt_auto_next_btn yt_auto_next_cancel"
+                                        t-on-click="cancelAutoNext">
+                                    Annuler
+                                </button>
+                                <button class="yt_auto_next_btn yt_auto_next_skip"
+                                        t-on-click="skipAutoNext">
+                                    <i class="fa fa-forward me-1" title="Suivant"/> Lire maintenant
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Playlist sidebar -->
+                <div t-if="state.isPlaylistMode and state.showPlaylistPanel"
+                     class="yt_playlist_sidebar">
+                    <div class="yt_playlist_sidebar_header">
+                        <h5 class="yt_playlist_sidebar_title">
+                            <i class="fa fa-list-ul me-2" title="Liste de lecture"/>
+                            <t t-esc="state.playlistName"/>
+                        </h5>
+                        <span class="yt_playlist_sidebar_count text-muted">
+                            <t t-esc="state.currentIndex + 1"/> / <t t-esc="state.playlistTracks.length"/>
+                        </span>
+                    </div>
+                    <div class="yt_playlist_sidebar_list" t-ref="sidebarList">
+                        <t t-foreach="state.playlistTracks" t-as="track" t-key="track.id">
+                            <div t-attf-class="yt_playlist_sidebar_item #{track_index === state.currentIndex ? 'yt_playlist_item_active' : ''} #{state.dragOverIndex === track_index and state.dragIndex !== track_index ? 'yt_playlist_item_dragover' : ''} #{state.dragIndex === track_index ? 'yt_playlist_item_dragging' : ''}"
+                                 t-on-click="() => this.playTrackAt(track_index)"
+                                 draggable="true"
+                                 t-on-dragstart="(ev) => this.onDragStart(track_index, ev)"
+                                 t-on-dragover="(ev) => this.onDragOver(track_index, ev)"
+                                 t-on-dragleave="() => this.onDragLeave()"
+                                 t-on-drop="(ev) => this.onDrop(track_index, ev)"
+                                 t-on-dragend="() => this.onDragEnd()">
+                                <!-- Drag handle -->
+                                <div class="yt_playlist_item_handle" title="Glisser pour réordonner">
+                                    <i class="fa fa-grip-vertical" title="Déplacer"/>
+                                </div>
+                                <div class="yt_playlist_item_index">
+                                    <span t-if="track_index !== state.currentIndex"
+                                          class="yt_playlist_item_num"
+                                          t-esc="track_index + 1"/>
+                                    <i t-if="track_index === state.currentIndex"
+                                       class="fa fa-volume-up yt_playlist_item_playing"
+                                       title="En cours de lecture"/>
+                                </div>
+                                <div class="yt_playlist_item_thumb">
+                                    <img t-if="track.thumbnail_url"
+                                         t-att-src="track.thumbnail_url"
+                                         alt="Miniature"
+                                         class="yt_playlist_item_img"/>
+                                    <div t-else="" class="yt_playlist_item_img_placeholder">
+                                        <i t-attf-class="fa #{track.is_audio ? 'fa-music' : 'fa-film'}" title="Média"/>
+                                    </div>
+                                </div>
+                                <div class="yt_playlist_item_info">
+                                    <div class="yt_playlist_item_name" t-esc="track.name"/>
+                                    <div class="yt_playlist_item_meta text-muted">
+                                        <span t-if="track.video_author" t-esc="track.video_author"/>
+                                        <span t-if="track.video_duration" class="ms-2">
+                                            <t t-esc="track.video_duration"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <!-- Actions on hover -->
+                                <div class="yt_playlist_item_actions">
+                                    <button t-if="track_index > 0"
+                                            class="yt_playlist_item_action_btn"
+                                            t-on-click.stop="() => this.moveTrack(track_index, -1)"
+                                            title="Monter">
+                                        <i class="fa fa-chevron-up" title="Monter"/>
+                                    </button>
+                                    <button t-if="track_index &lt; state.playlistTracks.length - 1"
+                                            class="yt_playlist_item_action_btn"
+                                            t-on-click.stop="() => this.moveTrack(track_index, 1)"
+                                            title="Descendre">
+                                        <i class="fa fa-chevron-down" title="Descendre"/>
+                                    </button>
+                                    <button t-if="state.playlistTracks.length > 1"
+                                            class="yt_playlist_item_action_btn yt_playlist_item_remove"
+                                            t-on-click="(ev) => this.removeTrack(track_index, ev)"
+                                            title="Retirer de la liste">
+                                        <i class="fa fa-times" title="Retirer"/>
+                                    </button>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

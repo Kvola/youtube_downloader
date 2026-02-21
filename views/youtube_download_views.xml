@@ -31,6 +31,16 @@
                             type="object"
                             class="btn-danger"
                             invisible="state not in ('draft', 'pending', 'error')"/>
+                    <button name="action_play_video"
+                            string="🎬 Regarder"
+                            type="object"
+                            class="btn-success"
+                            invisible="state != 'done' or not file_exists"/>
+                    <button name="action_add_to_playlist"
+                            string="🎶 Ajouter à une liste"
+                            type="object"
+                            class="btn-info"
+                            invisible="state != 'done' or not file_exists"/>
                     <button name="action_reset_draft"
                             string="↩ Remettre en brouillon"
                             type="object"
@@ -50,6 +60,19 @@
                     <field name="is_playlist" invisible="1"/>
                     <field name="playlist_count" invisible="1"/>
                     <field name="file_exists" invisible="1"/>
+                    <field name="in_playlist_count" invisible="1"/>
+
+                    <!-- Bouton statistique : playlists -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_in_playlists"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-list-ul"
+                                invisible="in_playlist_count == 0">
+                            <field name="in_playlist_count" widget="statinfo"
+                                   string="Liste(s)"/>
+                        </button>
+                    </div>
 
                     <!-- Ribbon pour la priorité -->
                     <widget name="web_ribbon" title="Urgente"
@@ -124,6 +147,11 @@
                                 — <field name="file_name"/>
                             </span>
                         </div>
+                        <button name="action_play_video"
+                                string="🎬 Regarder"
+                                type="object"
+                                class="btn btn-sm btn-success ms-2"
+                                invisible="not file_exists"/>
                         <button name="action_open_file_location"
                                 string="📁 Voir"
                                 type="object"
@@ -300,6 +328,88 @@
     </record>
 
     <!-- ═══════════════════════════════════════════════════════════
+         VUE LECTEUR VIDÉO (dialogue)
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_download_player" model="ir.ui.view">
+        <field name="name">youtube.download.player</field>
+        <field name="model">youtube.download</field>
+        <field name="arch" type="xml">
+            <form string="🎬 Lecteur Vidéo" class="o_youtube_player_form" create="0" edit="0" delete="0">
+                <sheet>
+                    <field name="state" invisible="1"/>
+                    <field name="file_path" invisible="1"/>
+                    <field name="file_exists" invisible="1"/>
+                    <field name="output_format" invisible="1"/>
+                    <field name="quality" invisible="1"/>
+                    <field name="video_thumbnail_url" invisible="1"/>
+                    <field name="video_author" invisible="1"/>
+                    <field name="video_duration" invisible="1"/>
+                    <field name="video_duration_display" invisible="1"/>
+                    <field name="file_size" invisible="1"/>
+                    <field name="file_size_display" invisible="1"/>
+
+                    <div class="yt_player_container">
+                        <!-- Lecteur Vidéo -->
+                        <div class="yt_player_media_wrapper"
+                             invisible="output_format in ('mp3', 'wav')">
+                            <video class="yt_player_video"
+                                   controls="controls"
+                                   preload="metadata"
+                                   autoplay="autoplay"
+                                   playsinline="true"
+                                   style="width: 100%; max-height: 70vh;">
+                                Votre navigateur ne supporte pas la lecture vidéo HTML5.
+                            </video>
+                        </div>
+
+                        <!-- Lecteur Audio -->
+                        <div invisible="output_format not in ('mp3', 'wav')">
+                            <div class="yt_player_audio_visual">
+                                <div class="yt_player_audio_placeholder">
+                                    <span class="yt_player_audio_icon">🎵</span>
+                                </div>
+                            </div>
+                            <audio controls="controls" preload="metadata"
+                                   autoplay="autoplay"
+                                   style="width: 100%; margin-top: 16px;">
+                                Votre navigateur ne supporte pas la lecture audio HTML5.
+                            </audio>
+                        </div>
+
+                        <!-- Info vidéo -->
+                        <div class="yt_player_info">
+                            <div class="yt_player_info_title">
+                                <field name="name"/>
+                            </div>
+                            <div class="yt_player_info_meta">
+                                <span invisible="not video_author" class="me-3">
+                                    <i class="fa fa-user me-1" title="Auteur"/>
+                                    <field name="video_author" class="d-inline"/>
+                                </span>
+                                <span invisible="video_duration == 0" class="me-3">
+                                    <i class="fa fa-clock-o me-1" title="Durée"/>
+                                    <field name="video_duration_display" class="d-inline"/>
+                                </span>
+                                <span invisible="file_size == 0" class="me-3">
+                                    <i class="fa fa-hdd-o me-1" title="Taille"/>
+                                    <field name="file_size_display" class="d-inline"/>
+                                </span>
+                                <span invisible="not quality">
+                                    <i class="fa fa-diamond me-1" title="Qualité"/>
+                                    <field name="quality" class="d-inline"/>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </sheet>
+                <footer>
+                    <button string="Fermer" class="btn btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
          VUE LISTE
     ════════════════════════════════════════════════════════════ -->
     <record id="view_youtube_download_list" model="ir.ui.view">
@@ -337,6 +447,7 @@
                        decoration-warning="state in ('pending', 'downloading')"
                        decoration-danger="state == 'error'"
                        decoration-muted="state in ('draft', 'cancelled')"/>
+                <field name="in_playlist_count" string="🎶 Playlists" optional="show"/>
                 <field name="download_date" optional="show"/>
                 <field name="user_id" widget="many2one_avatar" optional="show"/>
                 <field name="tag_ids" widget="many2many_tags"
@@ -391,6 +502,8 @@
                 <field name="retry_count"/>
                 <field name="priority"/>
                 <field name="tag_ids"/>
+                <field name="in_playlist_count"/>
+                <field name="in_playlist_names"/>
                 <progressbar field="state"
                              colors='{"done": "success", "error": "danger", "downloading": "warning", "pending": "info", "draft": "muted", "cancelled": "200"}'/>
                 <templates>
@@ -477,13 +590,25 @@
                                     </span>
                                 </div>
 
+                                <!-- Indicateur playlists -->
+                                <div t-if="record.in_playlist_count.raw_value > 0" class="mt-2">
+                                    <span class="badge bg-info bg-opacity-75" title="Dans des listes de lecture">
+                                        🎶 <t t-esc="record.in_playlist_count.value"/> liste(s)
+                                    </span>
+                                    <small t-if="record.in_playlist_names.value" class="text-muted d-block text-truncate mt-1"
+                                           style="max-width: 250px;" t-att-title="record.in_playlist_names.value">
+                                        <t t-esc="record.in_playlist_names.value"/>
+                                    </small>
+                                </div>
+
                                 <!-- Footer avec avatar -->
                                 <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                                     <field name="tag_ids" widget="many2many_tags"
                                            options="{'color_field': 'color'}"/>
                                     <img t-att-src="kanban_image('res.users', 'avatar_128', record.user_id.raw_value)"
                                          class="rounded-circle" width="28" height="28"
-                                         t-att-title="record.user_id.value"/>
+                                         t-att-title="record.user_id.value"
+                                         alt="Avatar utilisateur"/>
                                 </div>
                             </div>
                         </div>

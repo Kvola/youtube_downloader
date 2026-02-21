@@ -38,6 +38,14 @@
               sequence="20"
               groups="youtube_downloader.group_youtube_user"/>
 
+    <!-- Listes de lecture -->
+    <menuitem id="menu_youtube_playlist"
+              name="🎶 Listes de lecture"
+              parent="menu_youtube_downloader_root"
+              action="action_youtube_playlist"
+              sequence="25"
+              groups="youtube_downloader.group_youtube_user"/>
+
     <!-- Téléchargements en cours -->
     <menuitem id="menu_youtube_download_active"
               name="📥 En cours"

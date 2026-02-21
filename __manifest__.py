@@ -44,6 +44,7 @@ Module complet de téléchargement YouTube avec :
         'data/ir_config_parameter.xml',
         'data/server_actions.xml',
         'views/youtube_download_views.xml',
+        'views/youtube_playlist_views.xml',
         'views/youtube_registration_views.xml',
         'views/res_config_settings_views.xml',
         'wizard/youtube_download_wizard_views.xml',
@@ -53,8 +54,10 @@ Module complet de téléchargement YouTube avec :
         'web.assets_backend': [
             'youtube_downloader/static/src/css/youtube_downloader.css',
             'youtube_downloader/static/src/xml/youtube_dashboard.xml',
+            'youtube_downloader/static/src/xml/youtube_video_player.xml',
             'youtube_downloader/static/src/js/youtube_downloader.js',
             'youtube_downloader/static/src/js/youtube_dashboard.js',
+            'youtube_downloader/static/src/js/youtube_video_player.js',
         ],
     },
     'installable': True,

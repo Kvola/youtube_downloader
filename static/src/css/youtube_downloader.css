@@ -1241,3 +1241,1528 @@
     background-color: #222244;
     border-color: #333366;
 }
+
+/* ═══════════════════════════════════════════════════
+   LECTEUR VIDÉO / AUDIO — PROFESSIONNEL (v2)
+══════════════════════════════════════════════════ */
+
+/* ─── Mode théâtre (pleine page) ─────────────────────────── */
+
+.yt_theater_wrapper {
+    background: #0a0a0a;
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.yt_theater_header {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background: #111;
+    border-bottom: 1px solid #222;
+    flex-shrink: 0;
+}
+
+.yt_theater_back_btn {
+    background: none;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.yt_theater_back_btn:hover {
+    background: #222;
+    border-color: #666;
+    color: #fff;
+}
+
+.yt_theater_title {
+    color: #eee;
+    font-size: 15px;
+    font-weight: 600;
+    margin-left: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.yt_theater_spacer {
+    flex-shrink: 0;
+    width: 20px;
+}
+
+/* Playlist controls in theater header */
+.yt_theater_playlist_controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.yt_theater_ctrl_btn {
+    background: none;
+    border: 1px solid transparent;
+    color: #888;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.yt_theater_ctrl_btn:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+}
+
+.yt_theater_ctrl_btn.yt_playlist_active {
+    color: #ff4444;
+}
+
+.yt_playlist_count_badge {
+    background: #ff4444;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 10px;
+    margin-left: 2px;
+    line-height: 1.2;
+}
+
+.yt_repeat_one_badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #ff4444;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.yt_playlist_repeat_one {
+    color: #ff4444;
+}
+
+/* Theater body: flex container for player + sidebar */
+.yt_theater_body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.yt_theater_body .yt_theater_content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.yt_theater_body.yt_theater_with_sidebar .yt_theater_content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ─── Playlist Sidebar ─────────────────────── */
+.yt_playlist_sidebar {
+    width: 360px;
+    flex-shrink: 0;
+    background: #111;
+    border-left: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.yt_playlist_sidebar_header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.yt_playlist_sidebar_title {
+    color: #eee;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.yt_playlist_sidebar_count {
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.yt_playlist_sidebar_list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+    min-height: 0;
+}
+
+.yt_playlist_sidebar_item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: 10px;
+    border-left: 3px solid transparent;
+}
+
+.yt_playlist_sidebar_item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.yt_playlist_sidebar_item.yt_playlist_item_active {
+    background: rgba(255,68,68,0.08);
+    border-left-color: #ff4444;
+}
+
+.yt_playlist_item_index {
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    color: #666;
+    font-size: 12px;
+}
+
+.yt_playlist_item_playing {
+    color: #ff4444 !important;
+    font-size: 14px;
+    animation: yt_pulse_icon 1.5s ease-in-out infinite;
+}
+
+@keyframes yt_pulse_icon {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.yt_playlist_item_thumb {
+    width: 48px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #222;
+}
+
+.yt_playlist_item_img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.yt_playlist_item_img_placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    font-size: 14px;
+}
+
+.yt_playlist_item_info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.yt_playlist_item_name {
+    color: #ddd;
+    font-size: 13px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.yt_playlist_item_active .yt_playlist_item_name {
+    color: #ff4444;
+}
+
+.yt_playlist_item_meta {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ─── Drag handle ─────────────────────── */
+.yt_playlist_item_handle {
+    width: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    font-size: 10px;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.yt_playlist_sidebar_item:hover .yt_playlist_item_handle {
+    opacity: 1;
+}
+
+.yt_playlist_item_handle:active {
+    cursor: grabbing;
+}
+
+/* ─── Drag & Drop states ─────────────── */
+.yt_playlist_item_dragging {
+    opacity: 0.4;
+    background: rgba(255,255,255,0.02);
+}
+
+.yt_playlist_item_dragover {
+    border-top: 2px solid #ff4444 !important;
+    margin-top: -2px;
+}
+
+/* ─── Item action buttons (hover) ─────── */
+.yt_playlist_item_actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.yt_playlist_sidebar_item:hover .yt_playlist_item_actions {
+    opacity: 1;
+}
+
+.yt_playlist_item_action_btn {
+    background: none;
+    border: none;
+    color: #777;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.yt_playlist_item_action_btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: #eee;
+}
+
+.yt_playlist_item_remove:hover {
+    background: rgba(255,68,68,0.15);
+    color: #ff4444;
+}
+
+/* ─── Custom scrollbar for sidebar ────── */
+.yt_playlist_sidebar_list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.yt_playlist_sidebar_list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.yt_playlist_sidebar_list::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+.yt_playlist_sidebar_list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* ─── Auto-next countdown overlay ─────── */
+.yt_auto_next_overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+    pointer-events: none;
+    animation: yt_auto_next_slide_up 0.3s ease-out;
+}
+
+@keyframes yt_auto_next_slide_up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.yt_auto_next_card {
+    background: rgba(17,17,17,0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 16px 20px;
+    max-width: 420px;
+    width: 100%;
+    pointer-events: all;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.yt_auto_next_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.yt_auto_next_label {
+    color: #aaa;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.yt_auto_next_countdown {
+    background: #ff4444;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    animation: yt_countdown_pulse 1s ease-in-out infinite;
+}
+
+@keyframes yt_countdown_pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.yt_auto_next_track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.yt_auto_next_thumb {
+    width: 64px;
+    height: 48px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #222;
+}
+
+.yt_auto_next_img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.yt_auto_next_img_placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    font-size: 18px;
+}
+
+.yt_auto_next_info {
+    flex: 1;
+    min-width: 0;
+}
+
+.yt_auto_next_name {
+    color: #eee;
+    font-size: 14px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.yt_auto_next_author {
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.yt_auto_next_actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.yt_auto_next_btn {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.yt_auto_next_cancel {
+    background: #333;
+    color: #ccc;
+}
+
+.yt_auto_next_cancel:hover {
+    background: #444;
+    color: #fff;
+}
+
+.yt_auto_next_skip {
+    background: #ff4444;
+    color: #fff;
+}
+
+.yt_auto_next_skip:hover {
+    background: #ff5555;
+    transform: translateY(-1px);
+}
+
+/* ─── Theater content position relative (for auto-next overlay) ─── */
+.yt_theater_content {
+    position: relative;
+}
+
+/* ─── Playlist Kanban Cards ─────────────────── */
+.o_youtube_playlist_kanban .o_kanban_record {
+    margin-bottom: 8px;
+}
+
+.o_youtube_playlist_card {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.o_youtube_playlist_cover {
+    position: relative;
+    height: 140px;
+    background: #f0f0f0;
+    overflow: hidden;
+}
+
+.o_youtube_playlist_cover_img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.o_youtube_playlist_cover_placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.o_youtube_playlist_play_overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.o_youtube_playlist_card:hover .o_youtube_playlist_play_overlay {
+    opacity: 1;
+}
+
+.o_youtube_playlist_play_btn {
+    background: rgba(255,68,68,0.9);
+    border: none;
+    color: #fff;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.o_youtube_playlist_play_btn:hover {
+    transform: scale(1.1);
+}
+
+.o_youtube_playlist_info {
+    padding: 10px 12px;
+}
+
+.o_youtube_playlist_name {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.o_youtube_playlist_meta {
+    display: flex;
+    align-items: center;
+}
+
+.o_youtube_playlist_actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.o_youtube_playlist_fav {
+    background: rgba(255,255,255,0.8);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.yt_theater_content > .yt_player_container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.yt_theater_loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+/* ─── Container principal du lecteur ─────────────────────── */
+
+.yt_player_container {
+    background: #0f0f0f;
+    border-radius: 12px;
+    overflow: hidden;
+    max-width: 100%;
+    position: relative;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    user-select: none;
+}
+
+.yt_player_container:fullscreen {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* ─── Zone média ─────────────────────────────────────────── */
+
+.yt_player_media_wrapper {
+    position: relative;
+    background: #000;
+    width: 100%;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.yt_player_video {
+    width: 100%;
+    max-height: 75vh;
+    display: block;
+    cursor: pointer;
+    background: #000;
+}
+
+.yt_fullscreen .yt_player_video {
+    max-height: 100vh;
+}
+
+/* Gradient bottom overlay (pour fondu vers contrôles) */
+.yt_player_gradient_bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.yt_controls_hidden .yt_player_gradient_bottom {
+    opacity: 0;
+}
+
+/* ─── Spinner de chargement personnalisé ─────────────────── */
+
+.yt_player_loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.yt_player_spinner {
+    width: 56px;
+    height: 56px;
+    position: relative;
+}
+
+.yt_player_spinner_ring {
+    width: 100%;
+    height: 100%;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    border-top-color: #ff0000;
+    border-radius: 50%;
+    animation: yt_spin_ring 0.8s linear infinite;
+}
+
+@keyframes yt_spin_ring {
+    to { transform: rotate(360deg); }
+}
+
+/* ─── Erreur ─────────────────────────────────────────────── */
+
+.yt_player_error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    width: 100%;
+    min-height: 300px;
+}
+
+.yt_player_error_card {
+    text-align: center;
+    max-width: 400px;
+}
+
+.yt_player_error_icon_wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255, 59, 48, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.yt_player_error_icon_wrap .fa {
+    font-size: 28px;
+    color: #ff3b30;
+}
+
+.yt_player_error_title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.yt_player_error_text {
+    color: #ff6b6b;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.yt_player_error_hint {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.yt_player_error_btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.yt_player_error_btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Overlay bouton play ────────────────────────────────── */
+
+.yt_player_play_overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.35);
+    transition: background 0.3s;
+    z-index: 5;
+}
+
+.yt_player_play_overlay:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.yt_player_play_btn_big {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 0, 0, 0.9);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s;
+    padding-left: 4px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+.yt_player_play_btn_big .fa {
+    margin-left: 3px;
+}
+
+.yt_player_play_overlay:hover .yt_player_play_btn_big {
+    transform: scale(1.12);
+    background: #ff0000;
+}
+
+/* ─── Audio : visualisation vinyle ───────────────────────── */
+
+.yt_player_audio_visual {
+    width: 100%;
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 360px;
+    background: linear-gradient(135deg, #0c0c1d 0%, #121233 30%, #0d1b3e 60%, #0a1628 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Reflets décoratifs */
+.yt_player_audio_visual::before {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 0, 0, 0.08) 0%, transparent 70%);
+    top: -50px;
+    right: -50px;
+    pointer-events: none;
+}
+
+.yt_player_audio_visual::after {
+    content: '';
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(66, 133, 244, 0.06) 0%, transparent 70%);
+    bottom: -30px;
+    left: -30px;
+    pointer-events: none;
+}
+
+.yt_player_audio_disc_wrapper {
+    position: relative;
+    z-index: 1;
+}
+
+.yt_player_audio_disc {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 
+        0 0 0 3px rgba(255, 255, 255, 0.05),
+        0 0 0 8px rgba(255, 255, 255, 0.02),
+        0 12px 48px rgba(0, 0, 0, 0.6);
+    transition: box-shadow 0.3s;
+}
+
+.yt_player_audio_disc.spinning {
+    animation: yt_disc_spin 6s linear infinite;
+    box-shadow: 
+        0 0 0 3px rgba(255, 0, 0, 0.2),
+        0 0 0 8px rgba(255, 0, 0, 0.05),
+        0 12px 48px rgba(0, 0, 0, 0.6),
+        0 0 60px rgba(255, 0, 0, 0.1);
+}
+
+@keyframes yt_disc_spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.yt_player_audio_cover {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.yt_player_audio_placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a1a2e, #2d1f3d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.yt_player_audio_placeholder .fa {
+    font-size: 56px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Trou central du disque vinyle */
+.yt_player_audio_disc_hole {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #0c0c1d;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    z-index: 2;
+}
+
+/* Barres de visualisation audio */
+.yt_player_audio_visualizer {
+    display: flex;
+    gap: 5px;
+    align-items: flex-end;
+    height: 48px;
+    margin-top: 28px;
+    z-index: 1;
+}
+
+.yt_player_bar {
+    width: 5px;
+    background: linear-gradient(to top, #ff0000, #ff4444);
+    border-radius: 3px;
+    animation: yt_bounce 0.5s ease-in-out infinite alternate;
+}
+
+.yt_player_bar:nth-child(1) { height: 12px; animation-delay: 0s; }
+.yt_player_bar:nth-child(2) { height: 22px; animation-delay: 0.08s; }
+.yt_player_bar:nth-child(3) { height: 32px; animation-delay: 0.16s; }
+.yt_player_bar:nth-child(4) { height: 18px; animation-delay: 0.24s; }
+.yt_player_bar:nth-child(5) { height: 28px; animation-delay: 0.12s; }
+.yt_player_bar:nth-child(6) { height: 14px; animation-delay: 0.2s; }
+.yt_player_bar:nth-child(7) { height: 24px; animation-delay: 0.04s; }
+
+@keyframes yt_bounce {
+    0% { height: 6px; opacity: 0.4; }
+    100% { height: 40px; opacity: 1; }
+}
+
+/* ─── Contrôles du lecteur ───────────────────────────────── */
+
+.yt_player_controls {
+    background: #181818;
+    padding: 0;
+    position: relative;
+    z-index: 10;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.yt_controls_hidden .yt_player_controls {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+}
+
+/* ─── Barre de progression avancée ───────────────────────── */
+
+.yt_player_progress_wrapper {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 7px 0;
+}
+
+.yt_player_progress_track {
+    width: 100%;
+    height: 4px;
+    background: #3a3a3a;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: height 0.15s;
+}
+
+.yt_player_progress_wrapper:hover .yt_player_progress_track {
+    height: 6px;
+}
+
+.yt_player_progress_buffer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+
+.yt_player_progress_fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: #ff0000;
+    border-radius: 2px;
+    transition: width 0.05s linear;
+    z-index: 1;
+}
+
+.yt_player_progress_thumb {
+    position: absolute;
+    right: -7px;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ff0000;
+    box-shadow: 0 0 6px rgba(255, 0, 0, 0.5);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.yt_player_progress_wrapper:hover .yt_player_progress_thumb {
+    transform: translateY(-50%) scale(1);
+}
+
+/* Hover time tooltip */
+.yt_player_hover_time {
+    position: absolute;
+    top: -28px;
+    transform: translateX(-50%);
+    background: rgba(20, 20, 20, 0.95);
+    color: #fff;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Barre de contrôles ─────────────────────────────────── */
+
+.yt_player_controls_row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 12px 8px;
+}
+
+.yt_player_controls_left,
+.yt_player_controls_right {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.yt_player_btn {
+    background: none;
+    border: none;
+    color: #ddd;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+    padding: 0;
+    position: relative;
+}
+
+.yt_player_btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.yt_player_btn:active {
+    transform: scale(0.92);
+}
+
+.yt_player_btn_play {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+}
+
+.yt_player_btn_play:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.yt_player_time {
+    margin-left: 10px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.yt_player_time_current {
+    color: #fff;
+}
+
+.yt_player_time_sep {
+    color: #666;
+    margin: 0 1px;
+}
+
+.yt_player_time_total {
+    color: #888;
+}
+
+/* ─── Volume ─────────────────────────────────────────────── */
+
+.yt_player_volume_group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.yt_player_volume_slider_wrap {
+    width: 0;
+    overflow: hidden;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.yt_player_volume_group:hover .yt_player_volume_slider_wrap {
+    width: 80px;
+}
+
+.yt_player_volume_slider {
+    width: 80px;
+    accent-color: #ff0000;
+    cursor: pointer;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+}
+
+.yt_player_volume_slider::-webkit-slider-runnable-track {
+    height: 4px;
+    background: #444;
+    border-radius: 2px;
+}
+
+.yt_player_volume_slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    margin-top: -4px;
+    cursor: pointer;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Vitesse de lecture (panneau personnalisé) ───────────── */
+
+.yt_player_speed {
+    position: relative;
+}
+
+.yt_player_btn_speed {
+    font-size: 12px;
+    font-weight: 600;
+    width: auto;
+    padding: 0 8px;
+    border-radius: 6px;
+    min-width: 38px;
+}
+
+.yt_player_speed_panel {
+    position: absolute;
+    bottom: 48px;
+    right: 0;
+    background: #282828;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 8px 0;
+    min-width: 160px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    animation: yt_panel_in 0.15s ease-out;
+}
+
+@keyframes yt_panel_in {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.yt_player_speed_panel_title {
+    color: #888;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 16px 8px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 4px;
+}
+
+.yt_player_speed_option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+}
+
+.yt_player_speed_option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.yt_player_speed_option.active {
+    color: #ff0000;
+    font-weight: 600;
+}
+
+.yt_player_speed_option .fa-check {
+    font-size: 11px;
+    color: #ff0000;
+}
+
+/* ─── Infos vidéo sous le lecteur ────────────────────────── */
+
+.yt_player_info {
+    padding: 14px 16px;
+    background: #141414;
+    border-top: 1px solid #222;
+}
+
+.yt_player_info_title {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.yt_player_info_meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.yt_player_info_chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    color: #aaa;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.yt_player_info_chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.yt_player_info_chip .fa {
+    font-size: 11px;
+    color: #888;
+}
+
+/* ─── Skip Feedback Animation ────────────────────────────── */
+
+@keyframes yt_skip_flash {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.yt_skip_forward_feedback .yt_player_media_wrapper::after,
+.yt_skip_backward_feedback .yt_player_media_wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 30%;
+    pointer-events: none;
+    z-index: 20;
+    animation: yt_skip_flash 0.5s ease-out;
+}
+
+.yt_skip_forward_feedback .yt_player_media_wrapper::after {
+    right: 0;
+    background: radial-gradient(circle at right center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+}
+
+.yt_skip_backward_feedback .yt_player_media_wrapper::before {
+    left: 0;
+    background: radial-gradient(circle at left center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+}
+
+/* ─── Vue formulaire lecteur (dialog fallback) ───────────── */
+
+.o_youtube_player_form .o_form_sheet {
+    padding: 0 !important;
+    background: #0f0f0f !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.o_youtube_player_form .o_form_sheet_bg {
+    background: #0f0f0f !important;
+    padding: 0 !important;
+}
+
+.o_youtube_player_form .modal-content {
+    background: #0f0f0f;
+    border: none;
+}
+
+.o_youtube_player_form .modal-header {
+    border-bottom: 1px solid #282828;
+    background: #181818;
+}
+
+.o_youtube_player_form .modal-header .modal-title {
+    color: #fff;
+}
+
+.o_youtube_player_form .modal-footer {
+    border-top: 1px solid #282828;
+    background: #181818;
+}
+
+/* ─── Curseur masqué quand contrôles cachés ──────────────── */
+
+.yt_controls_hidden {
+    cursor: none;
+}
+
+.yt_controls_hidden .yt_player_video {
+    cursor: none;
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .yt_theater_header {
+        padding: 8px 12px;
+    }
+
+    .yt_theater_back_btn span {
+        display: none;
+    }
+
+    .yt_theater_title {
+        font-size: 13px;
+        margin-left: 12px;
+    }
+
+    .yt_theater_spacer {
+        width: 40px;
+    }
+
+    .yt_theater_content {
+        padding: 8px;
+    }
+
+    /* Playlist sidebar collapses on mobile */
+    .yt_playlist_sidebar {
+        width: 100%;
+        max-height: 40vh;
+        border-left: none;
+        border-top: 1px solid #222;
+    }
+
+    .yt_theater_body.yt_theater_with_sidebar {
+        flex-direction: column;
+    }
+
+    /* Always show drag handles & actions on mobile (no hover) */
+    .yt_playlist_item_handle {
+        opacity: 0.5;
+    }
+
+    .yt_playlist_item_actions {
+        opacity: 1;
+    }
+
+    /* Auto-next overlay */
+    .yt_auto_next_overlay {
+        padding: 12px;
+    }
+
+    .yt_auto_next_card {
+        padding: 12px 14px;
+    }
+
+    .yt_auto_next_actions {
+        flex-direction: column;
+    }
+
+    .yt_theater_playlist_controls {
+        gap: 2px;
+    }
+
+    .yt_theater_ctrl_btn {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    .yt_player_container {
+        border-radius: 8px;
+    }
+
+    .yt_player_controls_row {
+        padding: 2px 8px 6px;
+    }
+
+    .yt_player_btn {
+        width: 34px;
+        height: 34px;
+        font-size: 12px;
+    }
+
+    .yt_player_btn_play {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+    }
+
+    .yt_player_time {
+        font-size: 11px;
+        margin-left: 6px;
+    }
+
+    .yt_player_info {
+        padding: 10px 12px;
+    }
+
+    .yt_player_info_title {
+        font-size: 13px;
+    }
+
+    .yt_player_info_chip {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .yt_player_audio_visual {
+        padding: 24px 16px;
+        min-height: 240px;
+    }
+
+    .yt_player_audio_disc {
+        width: 160px;
+        height: 160px;
+    }
+
+    .yt_player_play_btn_big {
+        width: 64px;
+        height: 64px;
+        font-size: 22px;
+    }
+
+    .yt_player_speed_panel {
+        min-width: 130px;
+    }
+
+    .yt_player_volume_group:hover .yt_player_volume_slider_wrap {
+        width: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .yt_player_controls_left .yt_player_btn:not(.yt_player_btn_play) {
+        display: none;
+    }
+
+    .yt_player_volume_group,
+    .yt_player_speed {
+        display: none;
+    }
+}

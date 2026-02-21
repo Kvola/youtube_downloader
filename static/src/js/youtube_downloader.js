@@ -29,7 +29,10 @@ patch(FormController.prototype, {
         this._pollErrors = 0;
         this._lastState = null;
 
-        onMounted(() => this._startPollingIfNeeded());
+        onMounted(() => {
+            this._startPollingIfNeeded();
+            this._setupVideoPlayerSrc();
+        });
         onWillUnmount(() => this._stopPolling());
     },
 
@@ -127,6 +130,33 @@ patch(FormController.prototype, {
                 console.error("[YouTubeDownloader] Arrêt du polling après trop d'erreurs.");
             }
         }
+    },
+
+    /**
+     * Pour la vue lecteur (dialog o_youtube_player_form), injecte dynamiquement
+     * l'URL de streaming dans les balises <video> et <audio> du formulaire.
+     */
+    _setupVideoPlayerSrc() {
+        const formEl = this.rootRef?.el;
+        if (!formEl) return;
+
+        // Vérifie si c'est la vue lecteur (dialog)
+        const playerForm = formEl.closest(".o_youtube_player_form");
+        if (!playerForm) return;
+
+        const recordId = this.model?.root?.data?.id;
+        if (!recordId) return;
+
+        const streamUrl = `/youtube_downloader/stream/${recordId}`;
+
+        // Appliquer le src aux éléments video et audio
+        const mediaElements = playerForm.querySelectorAll("video, audio");
+        mediaElements.forEach((el) => {
+            if (!el.src || el.src === window.location.href) {
+                el.src = streamUrl;
+                el.load();
+            }
+        });
     },
 });
 

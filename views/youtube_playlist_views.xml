@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════
+         Wizard : Ajouter des médias à la playlist
+    ═══════════════════════════════════════════ -->
+    <record id="view_youtube_playlist_add_wizard_form" model="ir.ui.view">
+        <field name="name">youtube.playlist.add.wizard.form</field>
+        <field name="model">youtube.playlist.add.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Ajouter des médias">
+                <group>
+                    <field name="playlist_id" readonly="1"/>
+                    <field name="download_ids" widget="many2many_tags"
+                           domain="[('state', '=', 'done')]"/>
+                </group>
+                <footer>
+                    <button name="action_add" string="Ajouter" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════
+         Wizard : Ajouter un média à une playlist (depuis le formulaire de téléchargement)
+    ═══════════════════════════════════════════ -->
+    <record id="view_youtube_playlist_add_download_wizard_form" model="ir.ui.view">
+        <field name="name">youtube.playlist.add.download.wizard.form</field>
+        <field name="model">youtube.playlist.add.download.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Ajouter à une liste de lecture">
+                <group>
+                    <field name="download_id" readonly="1"/>
+                    <field name="playlist_id"/>
+                </group>
+                <footer>
+                    <button name="action_add" string="Ajouter" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════
+         Vues Liste de lecture (youtube.playlist)
+    ═══════════════════════════════════════════ -->
+
+    <!-- Tree View -->
+    <record id="view_youtube_playlist_tree" model="ir.ui.view">
+        <field name="name">youtube.playlist.tree</field>
+        <field name="model">youtube.playlist</field>
+        <field name="arch" type="xml">
+            <tree string="Listes de lecture" default_order="write_date desc">
+                <field name="name"/>
+                <field name="user_id" widget="many2one_avatar"/>
+                <field name="item_count" string="Médias"/>
+                <field name="total_duration"/>
+                <field name="is_favorite" widget="boolean_favorite" nolabel="1"/>
+                <field name="write_date" string="Dernière modification"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_youtube_playlist_kanban" model="ir.ui.view">
+        <field name="name">youtube.playlist.kanban</field>
+        <field name="model">youtube.playlist</field>
+        <field name="arch" type="xml">
+            <kanban class="o_youtube_playlist_kanban">
+                <field name="name"/>
+                <field name="item_count"/>
+                <field name="total_duration"/>
+                <field name="cover_url"/>
+                <field name="is_favorite"/>
+                <field name="color"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click o_youtube_playlist_card"
+                             t-attf-style="border-left: 4px solid #{kanban_color(record.color.raw_value)}">
+                            <!-- Couverture -->
+                            <div class="o_youtube_playlist_cover">
+                                <img t-if="record.cover_url.raw_value"
+                                     t-att-src="record.cover_url.raw_value"
+                                     alt="Couverture"
+                                     class="o_youtube_playlist_cover_img"/>
+                                <div t-else="" class="o_youtube_playlist_cover_placeholder">
+                                    <i class="fa fa-music fa-3x text-muted" title="Liste de lecture"/>
+                                </div>
+                                <!-- Bouton play overlay -->
+                                <div class="o_youtube_playlist_play_overlay">
+                                    <button name="action_play_playlist" type="object"
+                                            class="o_youtube_playlist_play_btn"
+                                            title="Lire la liste de lecture">
+                                        <i class="fa fa-play"/>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Infos -->
+                            <div class="o_youtube_playlist_info">
+                                <div class="o_youtube_playlist_name">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                                <div class="o_youtube_playlist_meta text-muted small">
+                                    <span>
+                                        <i class="fa fa-list-ol" title="Nombre de médias"/>
+                                        <t t-esc="record.item_count.raw_value"/> médias
+                                    </span>
+                                    <span t-if="record.total_duration.value" class="ms-2">
+                                        <i class="fa fa-clock-o" title="Durée totale"/>
+                                        <t t-esc="record.total_duration.value"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- Actions -->
+                            <div class="o_youtube_playlist_actions">
+                                <a class="o_youtube_playlist_fav" title="Favori">
+                                    <field name="is_favorite" widget="boolean_favorite" nolabel="1"/>
+                                </a>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_youtube_playlist_form" model="ir.ui.view">
+        <field name="name">youtube.playlist.form</field>
+        <field name="model">youtube.playlist</field>
+        <field name="arch" type="xml">
+            <form string="Liste de lecture">
+                <header>
+                    <button name="action_play_playlist" type="object"
+                            string="▶ Lire" class="btn-primary"
+                            invisible="item_count == 0"/>
+                    <button name="action_add_downloads" type="object"
+                            string="➕ Ajouter des médias" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-play-circle"
+                                name="action_play_playlist" type="object"
+                                invisible="item_count == 0">
+                            <field name="item_count" string="Médias" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Favori" bg_color="text-bg-warning"
+                            invisible="not is_favorite"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nom de la liste de lecture..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="user_id" widget="many2one_avatar"/>
+                            <field name="is_favorite" widget="boolean_favorite"/>
+                        </group>
+                        <group>
+                            <field name="total_duration"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Médias" name="items">
+                            <field name="item_ids">
+                                <tree editable="bottom" default_order="sequence">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="download_id"
+                                           domain="[('state', '=', 'done')]"/>
+                                    <field name="name" readonly="1"/>
+                                    <field name="video_author" readonly="1" optional="show"/>
+                                    <field name="video_duration_display" string="Durée" readonly="1"/>
+                                    <field name="quality" readonly="1" optional="show"/>
+                                    <field name="file_size_display" string="Taille" readonly="1" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Description de la liste de lecture..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_youtube_playlist" model="ir.actions.act_window">
+        <field name="name">Listes de lecture</field>
+        <field name="res_model">youtube.playlist</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('user_id', '=', uid)]</field>
+        <field name="context">{'default_user_id': uid}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre première liste de lecture !
+            </p>
+            <p>
+                Regroupez vos vidéos et audios téléchargés dans des listes de lecture
+                pour les écouter en continu.
+            </p>
+        </field>
+    </record>
+
+</odoo>
