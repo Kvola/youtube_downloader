@@ -33,6 +33,10 @@
             <field name="key">youtube_downloader.auto_retry</field>
             <field name="value">True</field>
         </record>
+        <record id="param_max_concurrent_conversions" model="ir.config_parameter">
+            <field name="key">youtube_downloader.max_concurrent_conversions</field>
+            <field name="value">2</field>
+        </record>
 
         <!-- Séquence pour les références -->
         <record id="seq_youtube_download" model="ir.sequence">

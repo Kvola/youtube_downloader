@@ -17,6 +17,44 @@ _logger = logging.getLogger(__name__)
 _download_semaphore_lock = threading.Lock()
 _download_semaphores = {}
 
+# Sémaphore global pour limiter les conversions MP4 simultanées
+# Partagé entre youtube.download, youtube.external.media et telegram.channel.video
+_conversion_semaphore = None
+_conversion_semaphore_lock = threading.Lock()
+
+
+def _get_conversion_semaphore(max_concurrent=2):
+    """Retourne le sémaphore de conversion MP4 partagé entre tous les modèles."""
+    global _conversion_semaphore
+    with _conversion_semaphore_lock:
+        if _conversion_semaphore is None:
+            _conversion_semaphore = threading.Semaphore(max_concurrent)
+        return _conversion_semaphore
+
+
+def _spawn_batch_coordinator(work_items, max_workers):
+    """
+    Lance UN seul thread coordinateur qui exécute les work_items
+    via un ThreadPoolExecutor à concurrence limitée.
+    Évite de créer N threads (RuntimeError: can't start new thread).
+
+    :param work_items: liste de (callable, args_tuple)
+    :param max_workers: nombre max de workers simultanés
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _coordinator():
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = [pool.submit(func, *args) for func, args in work_items]
+            for f in futures:
+                try:
+                    f.result()
+                except Exception as e:
+                    _logger.error("Batch worker error: %s", str(e))
+
+    thread = threading.Thread(target=_coordinator, daemon=True, name="batch-coordinator")
+    thread.start()
+
 
 def _get_semaphore(max_concurrent):
     """Retourne un sémaphore partagé pour limiter les téléchargements."""
@@ -1161,27 +1199,30 @@ class YoutubeDownload(models.Model):
 
         mp4_path = os.path.splitext(source_path)[0] + '.mp4'
 
-        # Étape 1 : Essayer le remuxage rapide (copy codecs)
+        # Étape 1 : Remuxage rapide (copier vidéo, ré-encoder audio en AAC)
+        # On ré-encode toujours l'audio en AAC car Opus/Vorbis dans MP4
+        # ne sont pas supportés par les navigateurs (son muet).
         cmd_remux = [
             'ffmpeg', '-i', source_path,
-            '-c', 'copy',                # Copier les flux sans ré-encodage
-            '-movflags', '+faststart',    # Optimiser pour le streaming web
-            '-y',                         # Écraser si existant
+            '-c:v', 'copy',               # Copier la vidéo sans ré-encodage
+            '-c:a', 'aac', '-b:a', '192k', # Toujours ré-encoder l'audio en AAC
+            '-movflags', '+faststart',     # Optimiser pour le streaming web
+            '-y',                          # Écraser si existant
             mp4_path,
         ]
 
-        _logger.info("Remuxage %s → MP4 (sans ré-encodage)...", ext)
+        _logger.info("Remuxage %s → MP4 (vidéo copy, audio AAC)...", ext)
         try:
             result = subprocess.run(
                 cmd_remux,
                 capture_output=True,
-                timeout=300,  # 5 min max
+                timeout=600,  # 10 min max (audio encoding)
             )
 
             if result.returncode != 0:
-                # Le remuxage a échoué (codecs non compatibles MP4)
-                # Faire un ré-encodage rapide
-                _logger.info("Remuxage échoué, ré-encodage rapide %s → MP4...", ext)
+                # Le remuxage a échoué (codec vidéo non compatible MP4)
+                # Faire un ré-encodage complet
+                _logger.info("Remuxage échoué, ré-encodage complet %s → MP4...", ext)
                 if os.path.exists(mp4_path):
                     os.remove(mp4_path)
 
@@ -1276,6 +1317,310 @@ class YoutubeDownload(models.Model):
                 'sticky': False,
             },
         }
+
+    def action_convert_to_mp4_batch(self):
+        """
+        Conversion groupée MP4 avec sémaphore pour limiter la concurrence.
+        Sélection multiple depuis la vue liste → menu Action.
+        Les conversions tournent en arrière-plan, contrôlées par un sémaphore
+        global pour ne pas saturer le CPU du serveur.
+        """
+        if not shutil.which('ffmpeg'):
+            raise UserError(_("ffmpeg n'est pas installé sur le serveur. La conversion est impossible."))
+
+        audio_extensions = {'.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.wma', '.opus'}
+        browser_compatible = {'.mp4', '.webm', '.ogg', '.ogv'}
+
+        # Filtrer les fichiers éligibles
+        eligible = self.env['youtube.download']
+        skipped = 0
+        for rec in self:
+            if rec.state != 'done' or not rec.file_path or not os.path.exists(rec.file_path):
+                skipped += 1
+                continue
+            ext = os.path.splitext(rec.file_path)[1].lower()
+            if ext in browser_compatible or ext in audio_extensions:
+                skipped += 1
+                continue
+            eligible |= rec
+
+        if not eligible:
+            raise UserError(_(
+                "Aucun fichier éligible à la conversion.\n"
+                "Seuls les fichiers vidéo non-MP4 terminés peuvent être convertis."
+            ))
+
+        # Récupérer la limite de concurrence depuis les paramètres
+        max_concurrent = int(self.env['ir.config_parameter'].sudo().get_param(
+            'youtube_downloader.max_concurrent_conversions', '2'
+        ))
+        max_concurrent = max(1, min(max_concurrent, 5))
+        semaphore = _get_conversion_semaphore(max_concurrent)
+
+        # Compteur partagé pour notification de fin de lot
+        batch_tracker = {
+            'total': len(eligible),
+            'done': 0,
+            'errors': 0,
+            'lock': threading.Lock(),
+            'uid': self.env.uid,
+            'dbname': self.env.cr.dbname,
+        }
+
+        # Lancer les conversions via un pool de workers (évite RuntimeError: can't start new thread)
+        work_items = [(self._convert_thread, (rec.id, semaphore, batch_tracker)) for rec in eligible]
+        _spawn_batch_coordinator(work_items, max_concurrent)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _("Conversion en cours"),
+                'message': _(
+                    "%d fichier(s) en cours de conversion en MP4 "
+                    "(max %d simultané(s)).%s",
+                    len(eligible), max_concurrent,
+                    _(' %d ignoré(s) (déjà MP4/audio/non prêt).', skipped) if skipped else '',
+                ),
+                'type': 'info',
+                'sticky': True,
+            },
+        }
+
+    @api.model
+    def _convert_thread(self, record_id, semaphore, batch_tracker=None):
+        """Thread de conversion MP4 contrôlé par sémaphore."""
+        success = False
+        try:
+            semaphore.acquire()
+            _logger.info("Conversion MP4 démarrée (sémaphore acquis) pour youtube.download [%s]", record_id)
+            with self.pool.cursor() as new_cr:
+                new_env = self.env(cr=new_cr)
+                record = new_env['youtube.download'].browse(record_id)
+                if record.exists() and record.state == 'done' and record.file_path:
+                    ext = os.path.splitext(record.file_path)[1].lower()
+                    if ext != '.mp4' and os.path.exists(record.file_path):
+                        record._auto_remux_to_mp4(record.file_path)
+                        record.message_post(body=_(
+                            "✅ Conversion en MP4 terminée avec succès."
+                        ))
+                        new_cr.commit()
+                        success = True
+        except Exception as e:
+            _logger.error("Erreur conversion MP4 thread [%s]: %s", record_id, str(e))
+            try:
+                with self.pool.cursor() as err_cr:
+                    err_env = self.env(cr=err_cr)
+                    rec = err_env['youtube.download'].browse(record_id)
+                    if rec.exists():
+                        rec.message_post(body=_(
+                            "❌ Échec de la conversion MP4 : %s", str(e),
+                        ))
+                        err_cr.commit()
+            except Exception:
+                pass
+        finally:
+            semaphore.release()
+            _logger.info("Conversion MP4 terminée (sémaphore libéré) pour youtube.download [%s]", record_id)
+            # Notification de fin de lot
+            if batch_tracker:
+                self._notify_batch_progress(batch_tracker, success)
+
+    @api.model
+    def _notify_batch_progress(self, batch_tracker, success):
+        """Met à jour le compteur de lot et envoie une notification bus quand tout est fini."""
+        with batch_tracker['lock']:
+            if success:
+                batch_tracker['done'] += 1
+            else:
+                batch_tracker['errors'] += 1
+            done = batch_tracker['done']
+            errors = batch_tracker['errors']
+            total = batch_tracker['total']
+
+        if done + errors >= total:
+            try:
+                with self.pool.cursor() as bus_cr:
+                    bus_env = self.env(cr=bus_cr)
+                    channel = (batch_tracker['dbname'], 'res.partner', bus_env['res.users'].browse(batch_tracker['uid']).partner_id.id)
+                    message_body = _(
+                        "🎬 Conversion MP4 terminée : %d/%d réussi(s)",
+                        done, total,
+                    )
+                    if errors:
+                        message_body += _(" — %d erreur(s)", errors)
+                    bus_env['bus.bus']._sendone(channel, 'simple_notification', {
+                        'title': _("Conversion MP4 terminée"),
+                        'message': message_body,
+                        'type': 'success' if errors == 0 else 'warning',
+                        'sticky': True,
+                    })
+                    bus_cr.commit()
+                    _logger.info("Notification fin de lot MP4 envoyée : %d/%d réussi(s), %d erreur(s)", done, total, errors)
+            except Exception as e:
+                _logger.error("Erreur envoi notification fin de lot : %s", str(e))
+
+    # ─── Réparation audio (MP4 avec Opus/Vorbis → AAC) ─────────────────────
+
+    def _fix_audio_aac(self, file_path):
+        """
+        Ré-encode uniquement l'audio d'un fichier MP4 en AAC.
+        La vidéo est copiée sans ré-encodage (-c:v copy).
+        Corrige les MP4 muets (Opus/Vorbis incompatible navigateur).
+        """
+        if not file_path or not os.path.exists(file_path):
+            return
+        if not shutil.which('ffmpeg'):
+            _logger.warning("ffmpeg non disponible")
+            return
+
+        tmp_path = file_path + '.fixing.mp4'
+        cmd = [
+            'ffmpeg', '-i', file_path,
+            '-c:v', 'copy',
+            '-c:a', 'aac', '-b:a', '192k',
+            '-movflags', '+faststart',
+            '-y',
+            tmp_path,
+        ]
+        _logger.info("Réparation audio AAC pour : %s", file_path)
+        try:
+            result = subprocess.run(cmd, capture_output=True, timeout=600)
+            if result.returncode != 0:
+                # Fallback : ré-encodage complet
+                _logger.info("Copy vidéo échoué, ré-encodage complet pour : %s", file_path)
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+                cmd_full = [
+                    'ffmpeg', '-i', file_path,
+                    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
+                    '-c:a', 'aac', '-b:a', '192k',
+                    '-movflags', '+faststart',
+                    '-y',
+                    tmp_path,
+                ]
+                result = subprocess.run(cmd_full, capture_output=True, timeout=3600)
+                if result.returncode != 0:
+                    stderr_msg = result.stderr.decode('utf-8', errors='replace')[-300:]
+                    raise Exception(f"Ré-encodage échoué: {stderr_msg}")
+
+            if not os.path.exists(tmp_path) or os.path.getsize(tmp_path) == 0:
+                raise Exception("Le fichier réparé est vide ou inexistant")
+
+            # Remplacer l'original
+            os.replace(tmp_path, file_path)
+            new_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            self.write({'file_size': round(new_size_mb, 2)})
+
+            self.message_post(body=_(
+                "🔊 <b>Audio réparé</b> : ré-encodé en AAC (%.2f Mo)", new_size_mb,
+            ))
+            _logger.info("Audio AAC réparé : %s", file_path)
+
+        except subprocess.TimeoutExpired:
+            _logger.error("Timeout réparation audio : %s", file_path)
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            raise
+        except Exception as e:
+            _logger.error("Erreur réparation audio : %s", str(e))
+            if os.path.exists(tmp_path) and os.path.getsize(tmp_path) == 0:
+                os.remove(tmp_path)
+            raise
+
+    def action_fix_audio_batch(self):
+        """
+        Action batch pour réparer l'audio des MP4 muets.
+        Sélection multiple → menu Action → 🔊 Réparer l'audio.
+        Force le ré-encodage audio en AAC sur les fichiers MP4 existants.
+        """
+        if not shutil.which('ffmpeg'):
+            raise UserError(_("ffmpeg n'est pas installé sur le serveur."))
+
+        audio_extensions = {'.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.wma', '.opus'}
+
+        eligible = self.env['youtube.download']
+        skipped = 0
+        for rec in self:
+            if rec.state != 'done' or not rec.file_path or not os.path.exists(rec.file_path):
+                skipped += 1
+                continue
+            ext = os.path.splitext(rec.file_path)[1].lower()
+            if ext in audio_extensions:
+                skipped += 1
+                continue
+            eligible |= rec
+
+        if not eligible:
+            raise UserError(_("Aucun fichier vidéo éligible à la réparation audio."))
+
+        max_concurrent = int(self.env['ir.config_parameter'].sudo().get_param(
+            'youtube_downloader.max_concurrent_conversions', '2'
+        ))
+        max_concurrent = max(1, min(max_concurrent, 5))
+        semaphore = _get_conversion_semaphore(max_concurrent)
+
+        batch_tracker = {
+            'total': len(eligible),
+            'done': 0,
+            'errors': 0,
+            'lock': threading.Lock(),
+            'uid': self.env.uid,
+            'dbname': self.env.cr.dbname,
+        }
+
+        # Lancer via pool de workers (évite RuntimeError: can't start new thread)
+        work_items = [(self._fix_audio_thread, (rec.id, semaphore, batch_tracker)) for rec in eligible]
+        _spawn_batch_coordinator(work_items, max_concurrent)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _("Réparation audio en cours"),
+                'message': _(
+                    "%d fichier(s) en cours de réparation audio AAC "
+                    "(max %d simultané(s)).%s",
+                    len(eligible), max_concurrent,
+                    _(' %d ignoré(s).', skipped) if skipped else '',
+                ),
+                'type': 'info',
+                'sticky': True,
+            },
+        }
+
+    @api.model
+    def _fix_audio_thread(self, record_id, semaphore, batch_tracker=None):
+        """Thread de réparation audio contrôlé par sémaphore."""
+        success = False
+        try:
+            semaphore.acquire()
+            _logger.info("Réparation audio démarrée pour youtube.download [%s]", record_id)
+            with self.pool.cursor() as new_cr:
+                new_env = self.env(cr=new_cr)
+                record = new_env['youtube.download'].browse(record_id)
+                if record.exists() and record.state == 'done' and record.file_path:
+                    if os.path.exists(record.file_path):
+                        record._fix_audio_aac(record.file_path)
+                        new_cr.commit()
+                        success = True
+        except Exception as e:
+            _logger.error("Erreur réparation audio thread [%s]: %s", record_id, str(e))
+            try:
+                with self.pool.cursor() as err_cr:
+                    err_env = self.env(cr=err_cr)
+                    rec = err_env['youtube.download'].browse(record_id)
+                    if rec.exists():
+                        rec.message_post(body=_(
+                            "❌ Échec réparation audio : %s", str(e),
+                        ))
+                        err_cr.commit()
+            except Exception:
+                pass
+        finally:
+            semaphore.release()
+            if batch_tracker:
+                self._notify_batch_progress(batch_tracker, success)
 
     def action_delete_file(self):
         """Supprime le fichier physique du disque."""

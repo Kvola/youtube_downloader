@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Wizard : Réparation audio intelligente
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_audio_repair_wizard_form" model="ir.ui.view">
+        <field name="name">audio.repair.wizard.form</field>
+        <field name="model">audio.repair.wizard</field>
+        <field name="arch" type="xml">
+            <form string="🔊 Réparation audio intelligente">
+                <sheet>
+
+                    <!-- ══ ÉTAPE 1 : SCAN ══ -->
+                    <div invisible="state != 'scan'">
+                        <div class="alert alert-info" role="alert">
+                            <div class="d-flex align-items-start">
+                                <span class="fs-3 me-3">🔊</span>
+                                <div>
+                                    <strong>Réparation audio intelligente</strong><br/>
+                                    Cet assistant va scanner <b>toutes vos vidéos</b> (YouTube, Telegram, fichiers externes)
+                                    et détecter automatiquement celles dont l'audio n'est pas en AAC.<br/><br/>
+                                    <b>Problème typique :</b> Les fichiers MKV/WebM convertis en MP4 avec l'ancien système
+                                    conservaient l'audio en Opus/Vorbis, ce qui rend le son muet dans les navigateurs.<br/><br/>
+                                    <span class="badge bg-warning text-dark">⚠️ Le scan peut prendre quelques minutes selon le nombre de fichiers</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ ÉTAPE 2 : RÉSULTATS ══ -->
+                    <div invisible="state != 'result'">
+
+                        <!-- Cas: Rien à réparer -->
+                        <div class="alert alert-success" role="alert"
+                             invisible="total_count != 0">
+                            <div class="d-flex align-items-start">
+                                <span class="fs-3 me-3">✅</span>
+                                <div>
+                                    <strong>Tout est en ordre !</strong><br/>
+                                    Tous vos fichiers vidéo ont déjà un audio compatible (AAC).
+                                    Aucune réparation n'est nécessaire.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cas: Fichiers à réparer -->
+                        <div class="alert alert-warning" role="alert"
+                             invisible="total_count == 0">
+                            <div class="d-flex align-items-start">
+                                <span class="fs-3 me-3">⚠️</span>
+                                <div>
+                                    <strong><field name="total_count" readonly="1"/> fichier(s) avec un audio incompatible détecté(s)</strong><br/>
+                                    L'audio sera ré-encodé en AAC (compatible tous navigateurs).
+                                    La vidéo ne sera <b>pas</b> ré-encodée (rapide).
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistiques -->
+                        <group>
+                            <group string="📊 Résultat du scan">
+                                <div class="row mb-2" invisible="youtube_count == 0">
+                                    <div class="col-8"><b>🎬 YouTube</b></div>
+                                    <div class="col-4">
+                                        <span class="badge bg-danger"><field name="youtube_count" readonly="1"/> à réparer</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2" invisible="external_count == 0">
+                                    <div class="col-8"><b>📂 Médias externes</b></div>
+                                    <div class="col-4">
+                                        <span class="badge bg-danger"><field name="external_count" readonly="1"/> à réparer</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2" invisible="telegram_count == 0">
+                                    <div class="col-8"><b>📱 Telegram</b></div>
+                                    <div class="col-4">
+                                        <span class="badge bg-danger"><field name="telegram_count" readonly="1"/> à réparer</span>
+                                    </div>
+                                </div>
+                            </group>
+                            <group string="✅ Déjà OK">
+                                <div class="row mb-2">
+                                    <div class="col-8">Audio AAC (aucune action)</div>
+                                    <div class="col-4">
+                                        <span class="badge bg-success"><field name="already_ok_count" readonly="1"/></span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2" invisible="no_audio_count == 0">
+                                    <div class="col-8">Sans piste audio</div>
+                                    <div class="col-4">
+                                        <span class="badge bg-secondary"><field name="no_audio_count" readonly="1"/></span>
+                                    </div>
+                                </div>
+                            </group>
+                        </group>
+
+                        <!-- Détails -->
+                        <separator string="📋 Détails des fichiers détectés"/>
+                        <field name="scan_details" readonly="1" nolabel="1"
+                               widget="text"
+                               style="min-height: 150px; max-height: 300px; font-family: monospace; font-size: 12px; background: #f8f9fa; overflow-y: auto;"/>
+                    </div>
+
+                    <!-- ══ ÉTAPE 3 : TERMINÉ ══ -->
+                    <div invisible="state != 'done'">
+                        <div class="alert alert-success" role="alert">
+                            <div class="d-flex align-items-start">
+                                <span class="fs-3 me-3">🚀</span>
+                                <div>
+                                    <strong>Réparation lancée !</strong><br/>
+                                    Les conversions audio tournent en arrière-plan.<br/>
+                                    Vous recevrez une <b>notification en temps réel</b> quand tout sera terminé.<br/>
+                                    Chaque fichier réparé aura un message dans son historique.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <field name="state" invisible="1"/>
+                </sheet>
+
+                <footer>
+                    <!-- Boutons étape SCAN -->
+                    <button name="action_scan"
+                            string="🔍 Lancer le scan"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'scan'"/>
+
+                    <!-- Boutons étape RESULT -->
+                    <button name="action_repair"
+                            string="🔧 Réparer tout"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'result' or total_count == 0"/>
+                    <button name="action_scan"
+                            string="🔄 Re-scanner"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'result'"/>
+
+                    <!-- Bouton fermer -->
+                    <button string="Fermer" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour ouvrir le wizard -->
+    <record id="action_audio_repair_wizard" model="ir.actions.act_window">
+        <field name="name">🔊 Réparation audio intelligente</field>
+        <field name="res_model">audio.repair.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

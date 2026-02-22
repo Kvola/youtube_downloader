@@ -53,6 +53,7 @@ Module complet de téléchargement YouTube avec :
         'views/res_config_settings_views.xml',
         'wizard/youtube_download_wizard_views.xml',
         'wizard/telegram_auth_wizard_views.xml',
+        'wizard/audio_repair_wizard_views.xml',
         'views/menu_views.xml',
     ],
     'assets': {

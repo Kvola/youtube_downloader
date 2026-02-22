@@ -227,4 +227,90 @@ records.action_toggle_subtitles(False)
         </field>
     </record>
 
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- CONVERSION MP4 EN LOT (BATCH)                                       -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+
+    <!-- 18. CONVERTIR EN MP4 – YouTube Downloads -->
+    <record id="action_server_convert_mp4_youtube" model="ir.actions.server">
+        <field name="name">🔄 Convertir en MP4</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+action = records.action_convert_to_mp4_batch()
+        </field>
+    </record>
+
+    <!-- 19. CONVERTIR EN MP4 – Fichiers Externes -->
+    <record id="action_server_convert_mp4_external" model="ir.actions.server">
+        <field name="name">🔄 Convertir en MP4</field>
+        <field name="model_id" ref="model_youtube_external_media"/>
+        <field name="binding_model_id" ref="model_youtube_external_media"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.external.media'].browse(env.context.get('active_ids', []))
+action = records.action_convert_to_mp4_batch()
+        </field>
+    </record>
+
+    <!-- 20. CONVERTIR EN MP4 – Vidéos Telegram -->
+    <record id="action_server_convert_mp4_telegram" model="ir.actions.server">
+        <field name="name">🔄 Convertir en MP4</field>
+        <field name="model_id" ref="model_telegram_channel_video"/>
+        <field name="binding_model_id" ref="model_telegram_channel_video"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['telegram.channel.video'].browse(env.context.get('active_ids', []))
+action = records.action_convert_to_mp4_batch()
+        </field>
+    </record>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- RÉPARATION AUDIO (MP4 MUETS → AAC)                                  -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+
+    <!-- 21. RÉPARER L'AUDIO – YouTube Downloads -->
+    <record id="action_server_fix_audio_youtube" model="ir.actions.server">
+        <field name="name">🔊 Réparer l'audio (AAC)</field>
+        <field name="model_id" ref="model_youtube_download"/>
+        <field name="binding_model_id" ref="model_youtube_download"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.download'].browse(env.context.get('active_ids', []))
+action = records.action_fix_audio_batch()
+        </field>
+    </record>
+
+    <!-- 22. RÉPARER L'AUDIO – Fichiers Externes -->
+    <record id="action_server_fix_audio_external" model="ir.actions.server">
+        <field name="name">🔊 Réparer l'audio (AAC)</field>
+        <field name="model_id" ref="model_youtube_external_media"/>
+        <field name="binding_model_id" ref="model_youtube_external_media"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['youtube.external.media'].browse(env.context.get('active_ids', []))
+action = records.action_fix_audio_batch()
+        </field>
+    </record>
+
+    <!-- 23. RÉPARER L'AUDIO – Vidéos Telegram -->
+    <record id="action_server_fix_audio_telegram" model="ir.actions.server">
+        <field name="name">🔊 Réparer l'audio (AAC)</field>
+        <field name="model_id" ref="model_telegram_channel_video"/>
+        <field name="binding_model_id" ref="model_telegram_channel_video"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records = env['telegram.channel.video'].browse(env.context.get('active_ids', []))
+action = records.action_fix_audio_batch()
+        </field>
+    </record>
+
 </odoo>

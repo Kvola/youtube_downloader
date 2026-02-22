@@ -143,4 +143,11 @@
               action="action_youtube_registration"
               sequence="20"
               groups="youtube_downloader.group_youtube_manager"/>
+
+    <menuitem id="menu_audio_repair_wizard"
+              name="🔊 Réparation audio"
+              parent="menu_youtube_admin"
+              action="action_audio_repair_wizard"
+              sequence="30"
+              groups="youtube_downloader.group_youtube_manager"/>
 </odoo>

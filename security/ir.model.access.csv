@@ -23,3 +23,4 @@ access_telegram_channel_manager,telegram.channel manager,model_telegram_channel,
 access_telegram_channel_video_user,telegram.channel.video user,model_telegram_channel_video,group_youtube_user,1,1,1,0
 access_telegram_channel_video_manager,telegram.channel.video manager,model_telegram_channel_video,group_youtube_manager,1,1,1,1
 access_telegram_auth_wizard_user,telegram.auth.wizard user,model_telegram_auth_wizard,group_youtube_user,1,1,1,1
+access_audio_repair_wizard_user,audio.repair.wizard user,model_audio_repair_wizard,group_youtube_user,1,1,1,1
