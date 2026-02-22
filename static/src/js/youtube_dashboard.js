@@ -28,9 +28,9 @@ export class YoutubeDashboard extends Component {
         onMounted(() => {
             // Rafraîchir le dashboard toutes les 30 secondes
             this._refreshInterval = setInterval(() => this._loadData(), 30000);
-            // Si téléchargements actifs, rafraîchir toutes les 5 secondes
+            // Si téléchargements actifs (YouTube OU Telegram), rafraîchir toutes les 5 secondes
             this._activeRefreshInterval = setInterval(() => {
-                if (this.state.data && this.state.data.in_progress > 0) {
+                if (this.state.data && this._hasActiveDownloads()) {
                     this._loadData();
                 }
             }, 5000);
@@ -62,6 +62,21 @@ export class YoutubeDashboard extends Component {
         await this._loadData();
     }
 
+    /**
+     * Vérifie si des téléchargements sont actifs (YouTube, Telegram ou les deux)
+     */
+    _hasActiveDownloads() {
+        const d = this.state.data;
+        if (!d) return false;
+        // YouTube en cours
+        if (d.in_progress > 0) return true;
+        // Telegram en cours
+        if (d.telegram && d.telegram.downloading > 0) return true;
+        // Fallback global
+        if (d.global && d.global.in_progress > 0) return true;
+        return false;
+    }
+
     // ─── Navigation actions ────────────────────────────────────────────
 
     onClickTotal() {
@@ -74,6 +89,7 @@ export class YoutubeDashboard extends Component {
             name: "Téléchargements terminés",
             res_model: "youtube.download",
             view_mode: "tree,kanban,form",
+            views: [[false, "list"], [false, "kanban"], [false, "form"]],
             domain: [["state", "=", "done"]],
         });
     }
@@ -92,6 +108,7 @@ export class YoutubeDashboard extends Component {
             name: "Brouillons",
             res_model: "youtube.download",
             view_mode: "tree,kanban,form",
+            views: [[false, "list"], [false, "kanban"], [false, "form"]],
             domain: [["state", "=", "draft"]],
         });
     }
@@ -114,6 +131,77 @@ export class YoutubeDashboard extends Component {
             res_id: recordId,
             view_mode: "form",
             views: [[false, "form"]],
+        });
+    }
+
+    // ─── Telegram navigation ──────────────────────────────────────────
+
+    onClickTelegramChannels() {
+        this.action.doAction("youtube_downloader.action_telegram_channel");
+    }
+
+    onClickTelegramVideos() {
+        this.action.doAction("youtube_downloader.action_telegram_video");
+    }
+
+    onClickTelegramDone() {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Vidéos Telegram téléchargées",
+            res_model: "telegram.channel.video",
+            view_mode: "tree,form",
+            views: [[false, "list"], [false, "form"]],
+            domain: [["state", "=", "done"]],
+        });
+    }
+
+    onClickTelegramErrors() {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Vidéos Telegram en erreur",
+            res_model: "telegram.channel.video",
+            view_mode: "tree,form",
+            views: [[false, "list"], [false, "form"]],
+            domain: [["state", "=", "error"]],
+        });
+    }
+
+    onClickTelegramChannel(channelId) {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Canal Telegram",
+            res_model: "telegram.channel",
+            res_id: channelId,
+            view_mode: "form",
+            views: [[false, "form"]],
+        });
+    }
+
+    // ─── External Media navigation ────────────────────────────────────
+
+    onClickExternalMedia() {
+        this.action.doAction("youtube_downloader.action_youtube_external_media");
+    }
+
+    onClickExternalMediaVideos() {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Médias externes — Vidéos",
+            res_model: "youtube.external.media",
+            view_mode: "tree,form",
+            views: [[false, "list"], [false, "form"]],
+            domain: [["media_type", "=", "video"], ["state", "=", "done"]],
+        });
+    }
+
+    onClickExternalMediaAudios() {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Médias externes — Audio",
+            res_model: "youtube.external.media",
+            view_mode: "tree,form",
+            views: [[false, "list"], [false, "form"]],
+            domain: [["media_type", "=", "audio"], ["state", "=", "done"]],
         });
     }
 

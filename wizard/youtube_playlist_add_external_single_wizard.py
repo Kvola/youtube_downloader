@@ -2,13 +2,13 @@
 from odoo import models, fields, api, _
 
 
-class YoutubePlaylistAddDownloadWizard(models.TransientModel):
-    _name = 'youtube.playlist.add.download.wizard'
-    _description = 'Ajouter un média à une liste de lecture'
+class YoutubePlaylistAddExternalSingleWizard(models.TransientModel):
+    _name = 'youtube.playlist.add.external.single.wizard'
+    _description = 'Ajouter un média externe à une liste de lecture'
 
-    download_id = fields.Many2one(
-        'youtube.download',
-        string='Média',
+    external_media_id = fields.Many2one(
+        'youtube.external.media',
+        string='Média externe',
         required=True,
         readonly=True,
     )
@@ -20,18 +20,19 @@ class YoutubePlaylistAddDownloadWizard(models.TransientModel):
     )
 
     def action_add(self):
-        """Ajoute le téléchargement à la playlist sélectionnée."""
+        """Ajoute le média externe à la playlist sélectionnée."""
         self.ensure_one()
         existing = self.playlist_id.item_ids.filtered(
-            lambda i: i.item_type == 'youtube' and i.download_id.id == self.download_id.id
+            lambda i: i.item_type == 'external'
+                      and i.external_media_id.id == self.external_media_id.id
         )
         if existing:
             return {'type': 'ir.actions.act_window_close'}
         max_seq = max(self.playlist_id.item_ids.mapped('sequence') or [0])
         self.env['youtube.playlist.item'].create({
             'playlist_id': self.playlist_id.id,
-            'item_type': 'youtube',
-            'download_id': self.download_id.id,
+            'item_type': 'external',
+            'external_media_id': self.external_media_id.id,
             'sequence': max_seq + 10,
         })
         return {'type': 'ir.actions.act_window_close'}

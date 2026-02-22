@@ -14,7 +14,7 @@
                             </svg>
                         </div>
                         <div class="yt_dash_title_group">
-                            <h2 class="yt_dash_title">YouTube Downloader</h2>
+                            <h2 class="yt_dash_title">Media Downloader</h2>
                             <span class="yt_dash_subtitle">Tableau de bord — Vue d'ensemble</span>
                         </div>
                     </div>
@@ -48,6 +48,68 @@
             </div>
 
             <div t-if="!state.loading and state.data" class="yt_dash_content">
+
+                <!-- ════════ BARRE SYNTHÈSE GLOBALE (toutes sources) ════════ -->
+                <div class="yt_global_bar">
+                    <div class="yt_global_item">
+                        <i class="fa fa-globe yt_global_icon"/>
+                        <div class="yt_global_info">
+                            <span class="yt_global_value"><t t-esc="state.data.global.total_downloads"/></span>
+                            <span class="yt_global_label">Téléchargés</span>
+                        </div>
+                    </div>
+                    <div class="yt_global_sep"/>
+                    <div class="yt_global_item">
+                        <i class="fa fa-hdd-o yt_global_icon"/>
+                        <div class="yt_global_info">
+                            <span class="yt_global_value"><t t-esc="state.data.global.total_size"/></span>
+                            <span class="yt_global_label">Stockage total</span>
+                        </div>
+                    </div>
+                    <div class="yt_global_sep"/>
+                    <div class="yt_global_item">
+                        <i class="fa fa-clock-o yt_global_icon"/>
+                        <div class="yt_global_info">
+                            <span class="yt_global_value"><t t-esc="state.data.global.total_duration"/></span>
+                            <span class="yt_global_label">Contenu total</span>
+                        </div>
+                    </div>
+                    <div class="yt_global_sep"/>
+                    <div class="yt_global_item" t-if="state.data.global.in_progress > 0">
+                        <span class="yt_live_dot"/>
+                        <div class="yt_global_info">
+                            <span class="yt_global_value yt_text_accent"><t t-esc="state.data.global.in_progress"/></span>
+                            <span class="yt_global_label">En cours</span>
+                        </div>
+                    </div>
+                    <div class="yt_global_sep" t-if="state.data.global.errors > 0"/>
+                    <div class="yt_global_item" t-if="state.data.global.errors > 0">
+                        <i class="fa fa-exclamation-triangle yt_global_icon yt_text_danger"/>
+                        <div class="yt_global_info">
+                            <span class="yt_global_value yt_text_danger"><t t-esc="state.data.global.errors"/></span>
+                            <span class="yt_global_label">Erreurs</span>
+                        </div>
+                    </div>
+                    <!-- Sources actives -->
+                    <div class="yt_global_sources ms-auto">
+                        <span class="yt_source_pill yt_source_yt" title="YouTube">
+                            <i class="fa fa-youtube-play"/> <t t-esc="state.data.done"/>
+                        </span>
+                        <span class="yt_source_pill yt_source_tg" title="Telegram"
+                              t-if="state.data.telegram.done > 0">
+                            <i class="fa fa-paper-plane"/> <t t-esc="state.data.telegram.done"/>
+                        </span>
+                        <span class="yt_source_pill yt_source_ext" title="Médias externes"
+                              t-if="state.data.external_media.done > 0">
+                            <i class="fa fa-folder-open"/> <t t-esc="state.data.external_media.done"/>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- ════════ SECTION : YouTube (KPI) ════════ -->
+                <div class="yt_section_title">
+                    <i class="fa fa-youtube-play yt_section_icon yt_section_icon_yt"/> YouTube
+                </div>
 
                 <!-- ════════ RANGÉE 1 : KPI PRINCIPAUX ════════ -->
                 <div class="yt_kpi_grid">
@@ -375,6 +437,158 @@
                     </div>
                 </div>
 
+                <!-- ════════ SECTION : TELEGRAM ════════ -->
+                <div class="yt_section_title" t-if="state.data.telegram.total_videos > 0 || state.data.telegram.channels > 0">
+                    <i class="fa fa-paper-plane yt_section_icon yt_section_icon_tg"/> Telegram
+                </div>
+
+                <div class="yt_dash_row yt_dash_row_tg"
+                     t-if="state.data.telegram.total_videos > 0 || state.data.telegram.channels > 0">
+                    <!-- KPI Telegram -->
+                    <div class="yt_card yt_card_tg_stats">
+                        <div class="yt_card_header">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-paper-plane me-2"/>Statistiques
+                            </h6>
+                            <button class="yt_btn yt_btn_sm yt_btn_ghost" t-on-click="onClickTelegramChannels">
+                                Canaux <i class="fa fa-arrow-right ms-1"/>
+                            </button>
+                        </div>
+                        <div class="yt_card_body">
+                            <div class="yt_tg_kpi_grid">
+                                <div class="yt_tg_kpi" t-on-click="onClickTelegramChannels" role="button">
+                                    <div class="yt_tg_kpi_icon yt_kpi_icon_tg_channels">
+                                        <i class="fa fa-bullhorn"/>
+                                    </div>
+                                    <div class="yt_tg_kpi_val"><t t-esc="state.data.telegram.channels"/></div>
+                                    <div class="yt_tg_kpi_lbl">Canaux</div>
+                                </div>
+                                <div class="yt_tg_kpi" t-on-click="onClickTelegramVideos" role="button">
+                                    <div class="yt_tg_kpi_icon yt_kpi_icon_tg_total">
+                                        <i class="fa fa-film"/>
+                                    </div>
+                                    <div class="yt_tg_kpi_val"><t t-esc="state.data.telegram.total_videos"/></div>
+                                    <div class="yt_tg_kpi_lbl">Vidéos trouvées</div>
+                                </div>
+                                <div class="yt_tg_kpi" t-on-click="onClickTelegramDone" role="button">
+                                    <div class="yt_tg_kpi_icon yt_kpi_icon_tg_done">
+                                        <i class="fa fa-check-circle"/>
+                                    </div>
+                                    <div class="yt_tg_kpi_val"><t t-esc="state.data.telegram.done"/></div>
+                                    <div class="yt_tg_kpi_lbl">Téléchargées</div>
+                                </div>
+                                <div class="yt_tg_kpi" t-if="state.data.telegram.errors > 0"
+                                     t-on-click="onClickTelegramErrors" role="button">
+                                    <div class="yt_tg_kpi_icon yt_kpi_icon_tg_error">
+                                        <i class="fa fa-exclamation-triangle"/>
+                                    </div>
+                                    <div class="yt_tg_kpi_val"><t t-esc="state.data.telegram.errors"/></div>
+                                    <div class="yt_tg_kpi_lbl">Erreurs</div>
+                                </div>
+                            </div>
+                            <!-- Barre taille + durée -->
+                            <div class="yt_tg_meta_bar mt-3">
+                                <div class="yt_tg_meta_item">
+                                    <i class="fa fa-hdd-o me-1"/>
+                                    <span><t t-esc="state.data.telegram.total_size"/></span>
+                                </div>
+                                <div class="yt_tg_meta_item">
+                                    <i class="fa fa-clock-o me-1"/>
+                                    <span><t t-esc="state.data.telegram.total_duration"/></span>
+                                </div>
+                                <div class="yt_tg_meta_item" t-if="state.data.telegram.pending > 0">
+                                    <i class="fa fa-hourglass-half me-1"/>
+                                    <span><t t-esc="state.data.telegram.pending"/> en attente</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Canaux Telegram récents -->
+                    <div class="yt_card yt_card_tg_channels"
+                         t-if="state.data.telegram.recent_channels.length > 0">
+                        <div class="yt_card_header">
+                            <h6 class="yt_card_title">
+                                <i class="fa fa-bullhorn me-2"/>Canaux récents
+                            </h6>
+                        </div>
+                        <div class="yt_card_body p-0">
+                            <t t-foreach="state.data.telegram.recent_channels" t-as="ch" t-key="ch.id">
+                                <div class="yt_tg_channel_item"
+                                     t-on-click="() => this.onClickTelegramChannel(ch.id)">
+                                    <div class="yt_tg_ch_icon">
+                                        <i class="fa fa-paper-plane"/>
+                                    </div>
+                                    <div class="yt_tg_ch_info">
+                                        <div class="yt_tg_ch_name text-truncate"><t t-esc="ch.name"/></div>
+                                        <div class="yt_tg_ch_meta">
+                                            <span><i class="fa fa-film me-1"/><t t-esc="ch.video_count"/> vidéos</span>
+                                            <span><i class="fa fa-check me-1"/><t t-esc="ch.downloaded"/> DL</span>
+                                            <span t-if="ch.subscribers">
+                                                <i class="fa fa-users me-1"/><t t-esc="ch.subscribers"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="yt_tg_ch_progress">
+                                        <div class="yt_mini_progress">
+                                            <div class="yt_mini_fill yt_fill_tg"
+                                                 t-attf-style="width: #{ch.video_count > 0 ? Math.round(ch.downloaded / ch.video_count * 100) : 0}%"/>
+                                        </div>
+                                        <span class="yt_progress_pct yt_pct_small">
+                                            <t t-esc="ch.video_count > 0 ? Math.round(ch.downloaded / ch.video_count * 100) : 0"/>%
+                                        </span>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ════════ SECTION : MÉDIAS EXTERNES ════════ -->
+                <div class="yt_section_title" t-if="state.data.external_media.total > 0">
+                    <i class="fa fa-folder-open yt_section_icon yt_section_icon_ext"/> Médias externes
+                </div>
+
+                <div class="yt_ext_card" t-if="state.data.external_media.total > 0">
+                    <div class="yt_ext_grid">
+                        <div class="yt_ext_kpi" t-on-click="onClickExternalMedia" role="button">
+                            <div class="yt_ext_kpi_icon yt_ext_icon_total">
+                                <i class="fa fa-folder-open"/>
+                            </div>
+                            <div class="yt_ext_kpi_val"><t t-esc="state.data.external_media.done"/></div>
+                            <div class="yt_ext_kpi_lbl">Total</div>
+                        </div>
+                        <div class="yt_ext_kpi" t-on-click="onClickExternalMediaVideos" role="button">
+                            <div class="yt_ext_kpi_icon yt_ext_icon_video">
+                                <i class="fa fa-film"/>
+                            </div>
+                            <div class="yt_ext_kpi_val"><t t-esc="state.data.external_media.videos"/></div>
+                            <div class="yt_ext_kpi_lbl">Vidéos</div>
+                        </div>
+                        <div class="yt_ext_kpi" t-on-click="onClickExternalMediaAudios" role="button">
+                            <div class="yt_ext_kpi_icon yt_ext_icon_audio">
+                                <i class="fa fa-music"/>
+                            </div>
+                            <div class="yt_ext_kpi_val"><t t-esc="state.data.external_media.audios"/></div>
+                            <div class="yt_ext_kpi_lbl">Audio</div>
+                        </div>
+                        <div class="yt_ext_kpi">
+                            <div class="yt_ext_kpi_icon yt_ext_icon_size">
+                                <i class="fa fa-hdd-o"/>
+                            </div>
+                            <div class="yt_ext_kpi_val yt_ext_val_sm"><t t-esc="state.data.external_media.total_size"/></div>
+                            <div class="yt_ext_kpi_lbl">Stockage</div>
+                        </div>
+                        <div class="yt_ext_kpi">
+                            <div class="yt_ext_kpi_icon yt_ext_icon_duration">
+                                <i class="fa fa-clock-o"/>
+                            </div>
+                            <div class="yt_ext_kpi_val yt_ext_val_sm"><t t-esc="state.data.external_media.total_duration"/></div>
+                            <div class="yt_ext_kpi_lbl">Durée</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ════════ RANGÉE 5 : ERREURS RÉCENTES + ACTIONS ════════ -->
                 <div class="yt_dash_row yt_dash_row_bottom">
                     <!-- Erreurs récentes -->
@@ -449,6 +663,18 @@
                                         t-on-click="onClickTotal">
                                     <i class="fa fa-list"/>
                                     <span>Tout<br/>afficher</span>
+                                </button>
+                                <button class="yt_action_btn yt_action_tg"
+                                        t-on-click="onClickTelegramChannels"
+                                        t-if="state.data.telegram.channels > 0">
+                                    <i class="fa fa-paper-plane"/>
+                                    <span>Telegram<br/>(<t t-esc="state.data.telegram.channels"/> canaux)</span>
+                                </button>
+                                <button class="yt_action_btn yt_action_ext"
+                                        t-on-click="onClickExternalMedia"
+                                        t-if="state.data.external_media.total > 0">
+                                    <i class="fa fa-folder-open"/>
+                                    <span>Médias<br/>externes</span>
                                 </button>
                             </div>
                         </div>

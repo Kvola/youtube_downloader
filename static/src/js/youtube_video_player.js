@@ -24,6 +24,7 @@ export class YoutubeVideoPlayer extends Component {
         recordId: { type: Number },
         recordName: { type: String, optional: true },
         isAudio: { type: Boolean, optional: true },
+        streamUrl: { type: String, optional: true },
         thumbnailUrl: { type: String, optional: true },
         videoDuration: { type: String, optional: true },
         videoAuthor: { type: String, optional: true },
@@ -41,6 +42,7 @@ export class YoutubeVideoPlayer extends Component {
     static defaultProps = {
         recordName: "Vidéo",
         isAudio: false,
+        streamUrl: "",
         thumbnailUrl: "",
         videoDuration: "",
         videoAuthor: "",
@@ -91,7 +93,7 @@ export class YoutubeVideoPlayer extends Component {
             showSpeedMenu: false,
         });
 
-        this.streamUrl = `/youtube_downloader/stream/${this.props.recordId}`;
+        this.streamUrl = this.props.streamUrl || `/youtube_downloader/stream/${this.props.recordId}`;
         this._controlsTimer = null;
         this._keyHandler = null;
         this._fullscreenHandler = null;
@@ -632,6 +634,7 @@ class YoutubeVideoPlayerAction extends Component {
                 id: recordId,
                 name: ctx.record_name || "Vidéo",
                 isAudio: ctx.is_audio || false,
+                streamUrl: ctx.stream_url || "",
                 thumbnailUrl: ctx.thumbnail_url || "",
                 videoAuthor: ctx.video_author || "",
                 videoDuration: ctx.video_duration || "",
@@ -652,6 +655,7 @@ class YoutubeVideoPlayerAction extends Component {
             id: track.id,
             name: track.name || "Vidéo",
             isAudio: track.is_audio || false,
+            streamUrl: track.stream_url || "",
             thumbnailUrl: track.thumbnail_url || "",
             videoAuthor: track.video_author || "",
             videoDuration: track.video_duration || "",

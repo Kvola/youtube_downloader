@@ -38,16 +38,21 @@ Module complet de téléchargement YouTube avec :
     'external_dependencies': {
         'python': ['yt_dlp'],
     },
+    # Note: 'telethon' est optionnel (installable depuis les paramètres pour Telegram)
     'data': [
         'security/youtube_downloader_security.xml',
         'security/ir.model.access.csv',
         'data/ir_config_parameter.xml',
         'data/server_actions.xml',
+        'data/ir_cron.xml',
         'views/youtube_download_views.xml',
         'views/youtube_playlist_views.xml',
+        'views/youtube_external_media_views.xml',
+        'views/telegram_channel_views.xml',
         'views/youtube_registration_views.xml',
         'views/res_config_settings_views.xml',
         'wizard/youtube_download_wizard_views.xml',
+        'wizard/telegram_auth_wizard_views.xml',
         'views/menu_views.xml',
     ],
     'assets': {

@@ -75,8 +75,20 @@ class YoutubeDownload(models.Model):
         ('mp4', 'MP4'),
         ('mkv', 'MKV'),
         ('webm', 'WEBM'),
+        ('avi', 'AVI'),
+        ('mov', 'MOV'),
+        ('flv', 'FLV'),
+        ('m4v', 'M4V'),
+        ('ogv', 'OGV'),
+        ('ts', 'TS'),
+        ('3gp', '3GP'),
         ('mp3', 'MP3 (audio)'),
         ('wav', 'WAV (audio)'),
+        ('ogg', 'OGG (audio)'),
+        ('flac', 'FLAC (audio)'),
+        ('aac', 'AAC (audio)'),
+        ('m4a', 'M4A (audio)'),
+        ('opus', 'OPUS (audio)'),
     ], string='Format de sortie', default='mp4', required=True)
 
     download_path = fields.Char(
@@ -365,11 +377,12 @@ class YoutubeDownload(models.Model):
     # ─── Onchange ─────────────────────────────────────────────────────────────
     @api.onchange('quality')
     def _onchange_quality(self):
+        audio_formats = ('mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus')
         if self.quality == 'audio_only':
             self.output_format = 'mp3'
         elif self.quality == 'audio_wav':
             self.output_format = 'wav'
-        elif self.output_format in ('mp3', 'wav'):
+        elif self.output_format in audio_formats:
             self.output_format = 'mp4'
 
     @api.onchange('url')
@@ -839,7 +852,7 @@ class YoutubeDownload(models.Model):
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'wav',
             })
-        elif self.output_format in ('mp4', 'mkv'):
+        elif self.output_format in ('mp4', 'mkv', 'avi', 'mov', 'flv', 'm4v', 'ogv', 'ts', '3gp'):
             # Utiliser merge_output_format + remux au lieu de FFmpegVideoConvertor
             # FFmpegVideoConvertor fait un ré-encodage complet (très lent : 15-25 min)
             # merge_output_format fait un simple remux (quasi-instantané : quelques secondes)
@@ -1094,7 +1107,7 @@ class YoutubeDownload(models.Model):
 
         # Déterminer si c'est un fichier audio ou vidéo
         ext = os.path.splitext(self.file_path)[1].lower()
-        is_audio = ext in ('.mp3', '.wav', '.m4a', '.ogg')
+        is_audio = ext in ('.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.wma', '.opus')
 
         return {
             'type': 'ir.actions.client',
@@ -1653,6 +1666,84 @@ class YoutubeDownload(models.Model):
                 quality_chart.append({'label': label, 'count': cnt, 'key': key})
         quality_chart.sort(key=lambda x: x['count'], reverse=True)
 
+        # ── Statistiques Telegram ──
+        TelegramChannel = self.env['telegram.channel']
+        TelegramVideo = self.env['telegram.channel.video']
+        tg_channels = TelegramChannel.search([])
+        tg_videos = TelegramVideo.search([])
+        tg_done = tg_videos.filtered(lambda v: v.state == 'done')
+        tg_downloading = tg_videos.filtered(lambda v: v.state == 'downloading')
+        tg_errors = tg_videos.filtered(lambda v: v.state == 'error')
+        tg_pending = tg_videos.filtered(lambda v: v.state == 'draft')
+        tg_total_size_mb = sum(tg_done.mapped('file_size'))
+        if tg_total_size_mb >= 1024:
+            tg_size_display = f"{tg_total_size_mb / 1024:.2f} Go"
+        else:
+            tg_size_display = f"{tg_total_size_mb:.2f} Mo"
+
+        tg_total_duration_sec = sum(tg_done.mapped('video_duration'))
+        tg_hours = tg_total_duration_sec // 3600
+        tg_minutes = (tg_total_duration_sec % 3600) // 60
+        if tg_hours > 0:
+            tg_duration_display = f"{tg_hours}h {tg_minutes:02d}min"
+        else:
+            tg_duration_display = f"{tg_minutes}min"
+
+        # Canaux récents (5 derniers scannés)
+        recent_channels = TelegramChannel.search(
+            [('state', '=', 'scanned')],
+            order='last_scan_date desc',
+            limit=5,
+        )
+        tg_recent_channels = []
+        for ch in recent_channels:
+            tg_recent_channels.append({
+                'id': ch.id,
+                'name': ch.channel_title or ch.name,
+                'video_count': ch.video_count,
+                'downloaded': ch.video_downloaded_count,
+                'subscribers': ch.subscriber_count,
+            })
+
+        # ── Statistiques Médias externes ──
+        ExternalMedia = self.env['youtube.external.media']
+        ext_all = ExternalMedia.search([])
+        ext_done = ext_all.filtered(lambda m: m.state == 'done')
+        ext_videos = ext_done.filtered(lambda m: m.media_type == 'video')
+        ext_audios = ext_done.filtered(lambda m: m.media_type == 'audio')
+        ext_total_size_mb = sum(ext_done.mapped('file_size'))
+        if ext_total_size_mb >= 1024:
+            ext_size_display = f"{ext_total_size_mb / 1024:.2f} Go"
+        else:
+            ext_size_display = f"{ext_total_size_mb:.2f} Mo"
+
+        ext_total_duration_sec = sum(ext_done.mapped('video_duration'))
+        ext_hours = ext_total_duration_sec // 3600
+        ext_minutes = (ext_total_duration_sec % 3600) // 60
+        if ext_hours > 0:
+            ext_duration_display = f"{ext_hours}h {ext_minutes:02d}min"
+        else:
+            ext_duration_display = f"{ext_minutes}min"
+
+        # ── Statistiques globales (toutes sources) ──
+        global_total_size = total_size_mb + tg_total_size_mb + ext_total_size_mb
+        if global_total_size >= 1024:
+            global_size_display = f"{global_total_size / 1024:.2f} Go"
+        else:
+            global_size_display = f"{global_total_size:.2f} Mo"
+
+        global_total_duration = total_duration_sec + tg_total_duration_sec + ext_total_duration_sec
+        g_hours = global_total_duration // 3600
+        g_minutes = (global_total_duration % 3600) // 60
+        if g_hours > 0:
+            global_duration_display = f"{g_hours}h {g_minutes:02d}min"
+        else:
+            global_duration_display = f"{g_minutes}min"
+
+        global_total_downloads = len(done) + len(tg_done) + len(ext_done)
+        global_in_progress = len(in_progress) + len(tg_downloading)
+        global_errors_count = len(errors) + len(tg_errors)
+
         return {
             'total': total,
             'done': len(done),
@@ -1684,6 +1775,38 @@ class YoutubeDownload(models.Model):
             'video_count': video_count,
             'playlist_count': playlist_count,
             'quality_chart': quality_chart,
+            # ── Telegram ──
+            'telegram': {
+                'channels': len(tg_channels),
+                'total_videos': len(tg_videos),
+                'done': len(tg_done),
+                'downloading': len(tg_downloading),
+                'errors': len(tg_errors),
+                'pending': len(tg_pending),
+                'total_size': tg_size_display,
+                'total_size_mb': tg_total_size_mb,
+                'total_duration': tg_duration_display,
+                'recent_channels': tg_recent_channels,
+            },
+            # ── Médias externes ──
+            'external_media': {
+                'total': len(ext_all),
+                'done': len(ext_done),
+                'videos': len(ext_videos),
+                'audios': len(ext_audios),
+                'total_size': ext_size_display,
+                'total_size_mb': ext_total_size_mb,
+                'total_duration': ext_duration_display,
+            },
+            # ── Global (toutes sources) ──
+            'global': {
+                'total_downloads': global_total_downloads,
+                'total_size': global_size_display,
+                'total_size_mb': global_total_size,
+                'total_duration': global_duration_display,
+                'in_progress': global_in_progress,
+                'errors': global_errors_count,
+            },
         }
 
     def unlink(self):

@@ -70,6 +70,41 @@ class ResConfigSettings(models.TransientModel):
              "Nécessaire pour contourner la détection anti-bot de YouTube. "
              "Exportez vos cookies depuis un navigateur connecté à YouTube.",
     )
+
+    # ─── Telegram ─────────────────────────────────────────────────────────────
+    telegram_api_id = fields.Char(
+        string='API ID Telegram',
+        config_parameter='youtube_downloader.telegram_api_id',
+        help="Obtenez votre API ID sur https://my.telegram.org → API development tools.",
+    )
+    telegram_api_hash = fields.Char(
+        string='API Hash Telegram',
+        config_parameter='youtube_downloader.telegram_api_hash',
+        help="Obtenez votre API Hash sur https://my.telegram.org → API development tools.",
+    )
+    telegram_phone = fields.Char(
+        string='Numéro de téléphone',
+        config_parameter='youtube_downloader.telegram_phone',
+        help="Numéro de téléphone associé au compte Telegram (format international, ex: +225XXXXXXXXXX).",
+    )
+    telegram_session_path = fields.Char(
+        string='Chemin du fichier de session',
+        config_parameter='youtube_downloader.telegram_session_path',
+        default='/tmp/youtube_downloads/telegram_session',
+        help="Chemin vers le fichier de session Telegram (sera créé automatiquement).",
+    )
+    telegram_max_concurrent = fields.Integer(
+        string='Téléchargements Telegram simultanés',
+        config_parameter='youtube_downloader.telegram_max_concurrent',
+        default=3,
+        help="Nombre maximum de vidéos Telegram téléchargées en parallèle. "
+             "Un sémaphore asyncio contrôle la concurrence au sein d'un même "
+             "client Telethon. Valeurs recommandées : 2 à 5.",
+    )
+    telegram_telethon_version = fields.Char(
+        string='Version Telethon installée',
+        compute='_compute_telethon_version',
+    )
     youtube_ytdlp_version = fields.Char(
         string='Version yt-dlp installée',
         compute='_compute_ytdlp_version',
@@ -215,3 +250,61 @@ class ResConfigSettings(models.TransientModel):
             raise UserError(_(
                 "Erreur de lecture du fichier '%s' :\n%s", path, str(e),
             ))
+
+    # ─── Telegram ─────────────────────────────────────────────────────────────
+    @api.depends()
+    def _compute_telethon_version(self):
+        for rec in self:
+            try:
+                import telethon
+                rec.telegram_telethon_version = telethon.__version__
+            except ImportError:
+                rec.telegram_telethon_version = 'Non installé'
+
+    def action_install_telethon(self):
+        """Installe la librairie Telethon pour Telegram."""
+        import subprocess
+        import sys
+        try:
+            subprocess.check_call(
+                [sys.executable, '-m', 'pip', 'install', '--upgrade', 'telethon'],
+                timeout=120,
+            )
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Installation réussie'),
+                    'message': _('Telethon a été installé/mis à jour avec succès.'),
+                    'type': 'success',
+                    'sticky': False,
+                },
+            }
+        except Exception as e:
+            raise UserError(_(
+                "Impossible d'installer Telethon :\n%s", str(e),
+            ))
+
+    def action_telegram_authenticate(self):
+        """Ouvre le wizard d'authentification Telegram."""
+        self.ensure_one()
+        if not self.telegram_api_id or not self.telegram_api_hash:
+            raise UserError(_(
+                "Veuillez d'abord saisir l'API ID et l'API Hash Telegram,\n"
+                "puis cliquez sur 'Enregistrer' avant de vous connecter.\n\n"
+                "Obtenez-les sur https://my.telegram.org → API development tools."
+            ))
+        try:
+            import telethon  # noqa: F401
+        except ImportError:
+            raise UserError(_(
+                "La librairie 'telethon' n'est pas installée.\n"
+                "Cliquez sur 'Installer Telethon' puis réessayez."
+            ))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'telegram.auth.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'name': _('Connexion Telegram'),
+        }

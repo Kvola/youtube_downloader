@@ -3,18 +3,20 @@
 
     <!-- Action client pour le tableau de bord -->
     <record id="action_youtube_dashboard" model="ir.actions.client">
-        <field name="name">Tableau de bord YouTube</field>
+        <field name="name">Tableau de bord</field>
         <field name="tag">youtube_downloader.dashboard</field>
     </record>
 
-    <!-- Menu racine -->
+    <!-- ═══════════════════════════════════════════
+         Menu racine
+    ═══════════════════════════════════════════ -->
     <menuitem id="menu_youtube_downloader_root"
-              name="YouTube Downloader"
+              name="Media Downloader"
               sequence="1"
               web_icon="youtube_downloader,static/description/icon.png"
               groups="youtube_downloader.group_youtube_user"/>
 
-    <!-- Tableau de bord -->
+    <!-- ─── Tableau de bord ─────────────────────────────────────────────── -->
     <menuitem id="menu_youtube_dashboard"
               name="📊 Tableau de bord"
               parent="menu_youtube_downloader_root"
@@ -22,39 +24,85 @@
               sequence="5"
               groups="youtube_downloader.group_youtube_user"/>
 
-    <!-- Sous-menu principal -->
+    <!-- ═══════════════════════════════════════════
+         Téléchargements (YouTube)
+    ═══════════════════════════════════════════ -->
+    <menuitem id="menu_downloads_parent"
+              name="📥 Téléchargements"
+              parent="menu_youtube_downloader_root"
+              sequence="10"
+              groups="youtube_downloader.group_youtube_user"/>
+
     <menuitem id="menu_youtube_download"
               name="Mes téléchargements"
-              parent="menu_youtube_downloader_root"
+              parent="menu_downloads_parent"
               action="action_youtube_download"
               sequence="10"
               groups="youtube_downloader.group_youtube_user"/>
 
-    <!-- Assistant de téléchargement -->
     <menuitem id="menu_youtube_download_wizard"
               name="⚡ Téléchargement rapide"
-              parent="menu_youtube_downloader_root"
+              parent="menu_downloads_parent"
               action="action_youtube_download_wizard"
               sequence="20"
               groups="youtube_downloader.group_youtube_user"/>
 
-    <!-- Listes de lecture -->
-    <menuitem id="menu_youtube_playlist"
-              name="🎶 Listes de lecture"
-              parent="menu_youtube_downloader_root"
-              action="action_youtube_playlist"
-              sequence="25"
-              groups="youtube_downloader.group_youtube_user"/>
-
-    <!-- Téléchargements en cours -->
     <menuitem id="menu_youtube_download_active"
-              name="📥 En cours"
-              parent="menu_youtube_downloader_root"
+              name="🔄 En cours"
+              parent="menu_downloads_parent"
               action="action_youtube_download_active"
               sequence="30"
               groups="youtube_downloader.group_youtube_user"/>
 
-    <!-- Analyse -->
+    <!-- ═══════════════════════════════════════════
+         Médiathèque (playlists + médias externes)
+    ═══════════════════════════════════════════ -->
+    <menuitem id="menu_mediatheque_parent"
+              name="📺 Médiathèque"
+              parent="menu_youtube_downloader_root"
+              sequence="20"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <menuitem id="menu_youtube_playlist"
+              name="🎶 Listes de lecture"
+              parent="menu_mediatheque_parent"
+              action="action_youtube_playlist"
+              sequence="10"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <menuitem id="menu_youtube_external_media"
+              name="📂 Médias externes"
+              parent="menu_mediatheque_parent"
+              action="action_youtube_external_media"
+              sequence="20"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <!-- ═══════════════════════════════════════════
+         Telegram
+    ═══════════════════════════════════════════ -->
+    <menuitem id="menu_telegram_parent"
+              name="📱 Telegram"
+              parent="menu_youtube_downloader_root"
+              sequence="30"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <menuitem id="menu_telegram_channels"
+              name="📡 Canaux"
+              parent="menu_telegram_parent"
+              action="action_telegram_channel"
+              sequence="10"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <menuitem id="menu_telegram_videos"
+              name="🎬 Vidéos"
+              parent="menu_telegram_parent"
+              action="action_telegram_video"
+              sequence="20"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <!-- ═══════════════════════════════════════════
+         Analyse (manager uniquement)
+    ═══════════════════════════════════════════ -->
     <menuitem id="menu_youtube_analysis"
               name="📊 Analyse"
               parent="menu_youtube_downloader_root"
@@ -73,15 +121,17 @@
               action="action_youtube_download_errors"
               sequence="20"/>
 
-    <!-- Administration -->
+    <!-- ═══════════════════════════════════════════
+         Administration (manager uniquement)
+    ═══════════════════════════════════════════ -->
     <menuitem id="menu_youtube_admin"
-              name="Administration"
+              name="⚙️ Administration"
               parent="menu_youtube_downloader_root"
               sequence="90"
               groups="youtube_downloader.group_youtube_manager"/>
 
     <menuitem id="menu_youtube_tags"
-              name="Tags"
+              name="🏷️ Tags"
               parent="menu_youtube_admin"
               action="action_youtube_download_tag"
               sequence="10"

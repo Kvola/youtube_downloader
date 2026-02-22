@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════
+         Vues Média Externe (youtube.external.media)
+    ═══════════════════════════════════════════ -->
+
+    <!-- Tree View -->
+    <record id="view_youtube_external_media_tree" model="ir.ui.view">
+        <field name="name">youtube.external.media.tree</field>
+        <field name="model">youtube.external.media</field>
+        <field name="arch" type="xml">
+            <tree string="Médias externes" default_order="create_date desc"
+                  decoration-muted="state == 'draft'"
+                  decoration-success="state == 'done'">
+                <field name="reference"/>
+                <field name="name"/>
+                <field name="media_type"/>
+                <field name="video_author" optional="show"/>
+                <field name="video_duration_display" string="Durée"/>
+                <field name="file_size_display" string="Taille"/>
+                <field name="source_url" optional="hide"/>
+                <field name="user_id" widget="many2one_avatar"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'done'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_youtube_external_media_form" model="ir.ui.view">
+        <field name="name">youtube.external.media.form</field>
+        <field name="model">youtube.external.media</field>
+        <field name="arch" type="xml">
+            <form string="Média externe">
+                <header>
+                    <button name="action_set_done" type="object"
+                            string="✓ Marquer comme prêt" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_reset_draft" type="object"
+                            string="↩ Brouillon" class="btn-secondary"
+                            invisible="state != 'done'"/>
+                    <button name="action_add_to_playlist" type="object"
+                            string="🎵 Ajouter à une playlist" class="btn-secondary"
+                            invisible="state != 'done'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-list"
+                                invisible="in_playlist_count == 0">
+                            <field name="in_playlist_count" string="Playlists" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <field name="video_thumbnail" widget="image" class="oe_avatar"
+                           options="{'size': [128, 128]}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Titre du média..."/>
+                        </h1>
+                        <field name="reference" readonly="1"/>
+                    </div>
+                    <group>
+                        <group string="Fichier média">
+                            <field name="file_data" filename="file_upload_name"
+                                   invisible="state == 'done'"
+                                   widget="binary"/>
+                            <field name="file_upload_name" invisible="1"/>
+                            <field name="media_type"/>
+                            <field name="file_name" invisible="state != 'done'"/>
+                            <field name="file_size_display" invisible="state != 'done'"/>
+                            <field name="file_exists" invisible="state != 'done'"
+                                   widget="boolean"/>
+                        </group>
+                        <group string="Informations">
+                            <field name="video_author" placeholder="Auteur ou source..."/>
+                            <field name="video_duration"
+                                   help="Entrez la durée en secondes"/>
+                            <field name="video_duration_display" invisible="not video_duration"/>
+                            <field name="source_url" placeholder="https://..." widget="url"/>
+                            <field name="user_id" widget="many2one_avatar"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description"
+                                   placeholder="Description du média..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_youtube_external_media_kanban" model="ir.ui.view">
+        <field name="name">youtube.external.media.kanban</field>
+        <field name="model">youtube.external.media</field>
+        <field name="arch" type="xml">
+            <kanban class="o_youtube_external_media_kanban">
+                <field name="name"/>
+                <field name="media_type"/>
+                <field name="video_author"/>
+                <field name="video_thumbnail_url"/>
+                <field name="file_size_display"/>
+                <field name="video_duration_display"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_image">
+                                <img t-if="record.video_thumbnail_url.raw_value"
+                                     t-att-src="record.video_thumbnail_url.raw_value"
+                                     alt="Miniature" class="o_image_64_contain"/>
+                                <div t-else="" class="o_kanban_image_default">
+                                    <i t-if="record.media_type.raw_value == 'audio'"
+                                       class="fa fa-music fa-2x text-muted" title="Audio"/>
+                                    <i t-else=""
+                                       class="fa fa-film fa-2x text-muted" title="Vidéo"/>
+                                </div>
+                            </div>
+                            <div class="oe_kanban_details">
+                                <strong class="o_kanban_record_title">
+                                    <field name="name"/>
+                                </strong>
+                                <div class="text-muted small">
+                                    <span t-if="record.video_author.raw_value">
+                                        <i class="fa fa-user"/> <t t-esc="record.video_author.value"/>
+                                    </span>
+                                    <span t-if="record.video_duration_display.raw_value" class="ms-2">
+                                        <i class="fa fa-clock-o"/> <t t-esc="record.video_duration_display.value"/>
+                                    </span>
+                                </div>
+                                <div class="text-muted small">
+                                    <span t-if="record.file_size_display.raw_value">
+                                        <i class="fa fa-hdd-o"/> <t t-esc="record.file_size_display.value"/>
+                                    </span>
+                                    <field name="state" widget="label_selection"
+                                           options="{'classes': {'draft': 'info', 'done': 'success'}}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_youtube_external_media_search" model="ir.ui.view">
+        <field name="name">youtube.external.media.search</field>
+        <field name="model">youtube.external.media</field>
+        <field name="arch" type="xml">
+            <search string="Médias externes">
+                <field name="name"/>
+                <field name="video_author"/>
+                <field name="reference"/>
+                <filter name="filter_video" string="Vidéos"
+                        domain="[('media_type', '=', 'video')]"/>
+                <filter name="filter_audio" string="Audio"
+                        domain="[('media_type', '=', 'audio')]"/>
+                <separator/>
+                <filter name="filter_done" string="Prêts"
+                        domain="[('state', '=', 'done')]"/>
+                <filter name="filter_draft" string="Brouillons"
+                        domain="[('state', '=', 'draft')]"/>
+                <separator/>
+                <filter name="filter_my" string="Mes médias"
+                        domain="[('user_id', '=', uid)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_type" string="Type" context="{'group_by': 'media_type'}"/>
+                    <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
+                    <filter name="group_author" string="Auteur" context="{'group_by': 'video_author'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_youtube_external_media" model="ir.actions.act_window">
+        <field name="name">Médias externes</field>
+        <field name="res_model">youtube.external.media</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="context">{'search_default_filter_my': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Ajoutez votre premier média externe !
+            </p>
+            <p>
+                Importez des vidéos ou des fichiers audio depuis votre ordinateur
+                pour les ajouter à vos listes de lecture.
+            </p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════
+         Wizard : Ajouter des médias externes à une playlist (multi)
+    ═══════════════════════════════════════════ -->
+    <record id="view_youtube_playlist_add_external_wizard_form" model="ir.ui.view">
+        <field name="name">youtube.playlist.add.external.wizard.form</field>
+        <field name="model">youtube.playlist.add.external.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Ajouter des médias externes">
+                <group>
+                    <field name="playlist_id" readonly="1"/>
+                    <field name="external_media_ids" widget="many2many_tags"
+                           domain="[('state', '=', 'done')]"/>
+                </group>
+                <footer>
+                    <button name="action_add" string="Ajouter" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════
+         Wizard : Ajouter un média externe à une playlist (depuis le formulaire média)
+    ═══════════════════════════════════════════ -->
+    <record id="view_youtube_playlist_add_external_single_wizard_form" model="ir.ui.view">
+        <field name="name">youtube.playlist.add.external.single.wizard.form</field>
+        <field name="model">youtube.playlist.add.external.single.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Ajouter à une liste de lecture">
+                <group>
+                    <field name="external_media_id" readonly="1"/>
+                    <field name="playlist_id"/>
+                </group>
+                <footer>
+                    <button name="action_add" string="Ajouter" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════
+         Séquence pour les médias externes
+    ═══════════════════════════════════════════ -->
+    <data noupdate="1">
+        <record id="seq_youtube_external_media" model="ir.sequence">
+            <field name="name">Média Externe</field>
+            <field name="code">youtube.external.media</field>
+            <field name="prefix">EXT/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+
+</odoo>

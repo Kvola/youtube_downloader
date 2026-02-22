@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════
+         Séquence
+    ═══════════════════════════════════════════ -->
+    <data noupdate="1">
+        <record id="seq_telegram_channel" model="ir.sequence">
+            <field name="name">Canal Telegram</field>
+            <field name="code">telegram.channel</field>
+            <field name="prefix">TG/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    </data>
+
+
+    <!-- ═══════════════════════════════════════════
+         Canal Telegram — Vues
+    ═══════════════════════════════════════════ -->
+
+    <!-- Tree View -->
+    <record id="view_telegram_channel_tree" model="ir.ui.view">
+        <field name="name">telegram.channel.tree</field>
+        <field name="model">telegram.channel</field>
+        <field name="arch" type="xml">
+            <tree string="Canaux Telegram" default_order="create_date desc"
+                  decoration-muted="state == 'draft'"
+                  decoration-success="state == 'scanned'"
+                  decoration-danger="state == 'error'"
+                  decoration-info="state == 'scanning'">
+                <field name="reference"/>
+                <field name="name"/>
+                <field name="channel_identifier"/>
+                <field name="channel_type" optional="show"/>
+                <field name="video_count" string="Vidéos"/>
+                <field name="video_downloaded_count" string="Téléchargées"/>
+                <field name="last_scan_date" optional="show"/>
+                <field name="user_id" widget="many2one_avatar"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'scanning'"
+                       decoration-success="state == 'scanned'"
+                       decoration-danger="state == 'error'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_telegram_channel_form" model="ir.ui.view">
+        <field name="name">telegram.channel.form</field>
+        <field name="model">telegram.channel</field>
+        <field name="arch" type="xml">
+            <form string="Canal Telegram">
+                <header>
+                    <button name="action_scan_channel" type="object"
+                            string="🔍 Scanner le canal" class="btn-primary"
+                            invisible="state == 'scanning'"
+                            confirm="Lancer le scan du canal Telegram ?"/>
+                    <button name="action_rescan" type="object"
+                            string="🔄 Rescanner" class="btn-secondary"
+                            invisible="state != 'scanned'"/>
+                    <button name="action_download_all" type="object"
+                            string="📥 Tout télécharger" class="btn-success"
+                            invisible="state != 'scanned'"/>
+                    <button name="action_reset_stuck_downloads" type="object"
+                            string="⚠️ Réinitialiser bloqués" class="btn-warning"
+                            invisible="state != 'scanned'"
+                            confirm="Réinitialiser les téléchargements bloqués depuis plus de 30 minutes ?"/>
+                    <button name="action_reset_draft" type="object"
+                            string="↩ Brouillon" class="btn-secondary"
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,scanning,scanned"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object"
+                                name="action_view_videos" icon="fa-video-camera">
+                            <field name="video_count" widget="statinfo"
+                                   string="Vidéos"/>
+                        </button>
+                        <button class="oe_stat_button" type="object"
+                                name="action_view_downloaded" icon="fa-download">
+                            <field name="video_downloaded_count" widget="statinfo"
+                                   string="Téléchargées"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="reference" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Canal">
+                            <field name="name" placeholder="Nom du canal"/>
+                            <field name="channel_identifier"
+                                   placeholder="@nomducanal ou https://t.me/nomducanal"/>
+                            <field name="channel_type"/>
+                            <field name="description" placeholder="Description optionnelle"/>
+                        </group>
+                        <group string="Options de scan">
+                            <field name="scan_limit"/>
+                            <field name="auto_download"/>
+                        </group>
+                    </group>
+                    <group string="Métadonnées Telegram"
+                           invisible="not channel_telegram_id">
+                        <group>
+                            <field name="channel_title" readonly="1"/>
+                            <field name="channel_telegram_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="subscriber_count" readonly="1"/>
+                            <field name="last_scan_date" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Barre de progression / message d'erreur -->
+                    <separator invisible="not scan_progress and not error_message"/>
+                        <div class="alert alert-info" role="alert"
+                             invisible="not scan_progress or not scan_progress and not error_message">
+                            <strong>📡 </strong>
+                            <field name="scan_progress" readonly="1" nolabel="1"/>
+                        </div>
+                        <div class="alert alert-danger" role="alert"
+                             invisible="not error_message or not scan_progress and not error_message">
+                            <strong>❌ Erreur : </strong>
+                            <field name="error_message" readonly="1" nolabel="1"/>
+                        </div>
+                    
+
+                    <notebook>
+                        <page string="📹 Vidéos" name="videos">
+                            <field name="video_ids" nolabel="1">
+                                <tree string="Vidéos du canal"
+                                      decoration-muted="state == 'draft'"
+                                      decoration-success="state == 'done'"
+                                      decoration-danger="state == 'error'"
+                                      decoration-info="state == 'downloading'"
+                                      editable="bottom">
+                                    <field name="name"/>
+                                    <field name="file_name_telegram" optional="hide"/>
+                                    <field name="video_duration_display" string="Durée"/>
+                                    <field name="file_size_display" string="Taille"/>
+                                    <field name="resolution_display" string="Résol." optional="show"/>
+                                    <field name="telegram_date" string="Date" optional="show"/>
+                                    <field name="progress" widget="progressbar"
+                                           invisible="state != 'downloading'"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'draft'"
+                                           decoration-warning="state == 'downloading'"
+                                           decoration-success="state == 'done'"
+                                           decoration-danger="state == 'error'"/>
+                                    <button name="action_download" type="object"
+                                            string="📥" title="Télécharger"
+                                            icon="fa-download"
+                                            invisible="state not in ('draft', 'error', 'downloading')"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="ℹ️ Informations" name="info">
+                            <group>
+                                <group>
+                                    <field name="user_id" readonly="1"/>
+                                    <field name="company_id"
+                                           groups="base.group_multi_company"/>
+                                    <field name="create_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_telegram_channel_kanban" model="ir.ui.view">
+        <field name="name">telegram.channel.kanban</field>
+        <field name="model">telegram.channel</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_order="create_date desc">
+                <field name="name"/>
+                <field name="channel_identifier"/>
+                <field name="video_count"/>
+                <field name="video_downloaded_count"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                                <field name="state" widget="label_selection"
+                                       options="{'classes': {'draft': 'default', 'scanning': 'info', 'scanned': 'success', 'error': 'danger'}}"/>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <span class="text-muted">
+                                    <field name="channel_identifier"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span title="Vidéos">
+                                        <i class="fa fa-video-camera"/>
+                                        <field name="video_count"/>
+                                    </span>
+                                    <span class="ms-2" title="Téléchargées">
+                                        <i class="fa fa-download"/>
+                                        <field name="video_downloaded_count"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_telegram_channel_search" model="ir.ui.view">
+        <field name="name">telegram.channel.search</field>
+        <field name="model">telegram.channel</field>
+        <field name="arch" type="xml">
+            <search string="Canaux Telegram">
+                <field name="name"/>
+                <field name="channel_identifier"/>
+                <field name="reference"/>
+                <filter name="filter_draft" string="Brouillon"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_scanned" string="Scanné"
+                        domain="[('state', '=', 'scanned')]"/>
+                <filter name="filter_error" string="Erreur"
+                        domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter name="filter_has_videos" string="Avec vidéos"
+                        domain="[('video_count', '>', 0)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="groupby_state" string="État"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="groupby_type" string="Type"
+                            context="{'group_by': 'channel_type'}"/>
+                    <filter name="groupby_user" string="Utilisateur"
+                            context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_telegram_channel" model="ir.actions.act_window">
+        <field name="name">Canaux Telegram</field>
+        <field name="res_model">telegram.channel</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_telegram_channel_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Ajoutez un canal Telegram pour télécharger ses vidéos
+            </p>
+            <p>
+                Scannez un canal Telegram pour lister toutes ses vidéos,
+                puis téléchargez celles qui vous intéressent.
+            </p>
+        </field>
+    </record>
+
+
+    <!-- ═══════════════════════════════════════════
+         Vidéo Telegram — Vues
+    ═══════════════════════════════════════════ -->
+
+    <!-- Tree View -->
+    <record id="view_telegram_video_tree" model="ir.ui.view">
+        <field name="name">telegram.channel.video.tree</field>
+        <field name="model">telegram.channel.video</field>
+        <field name="arch" type="xml">
+            <tree string="Vidéos Telegram" default_order="telegram_date desc"
+                  decoration-muted="state == 'draft'"
+                  decoration-success="state == 'done'"
+                  decoration-danger="state == 'error'"
+                  decoration-info="state == 'downloading'">
+                <field name="name"/>
+                <field name="channel_id"/>
+                <field name="video_duration_display" string="Durée"/>
+                <field name="file_size_display" string="Taille"/>
+                <field name="resolution_display" string="Résol." optional="show"/>
+                <field name="telegram_date" string="Date"/>
+                <field name="progress" widget="progressbar"
+                       invisible="state != 'downloading'"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'downloading'"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'error'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_telegram_video_form" model="ir.ui.view">
+        <field name="name">telegram.channel.video.form</field>
+        <field name="model">telegram.channel.video</field>
+        <field name="arch" type="xml">
+            <form string="Vidéo Telegram">
+                <header>
+                    <button name="action_download" type="object"
+                            string="📥 Télécharger" class="btn-primary"
+                            invisible="state not in ('draft', 'error')"/>
+                    <button name="action_retry" type="object"
+                            string="🔄 Réessayer" class="btn-warning"
+                            invisible="state not in ('error', 'downloading')"/>
+                    <button name="action_open_external_media" type="object"
+                            string="🎬 Voir le média" class="btn-secondary"
+                            invisible="not external_media_id"/>
+                    <button name="action_delete_file" type="object"
+                            string="🗑️ Supprimer le fichier" class="btn-danger"
+                            invisible="state != 'done'"
+                            confirm="Supprimer le fichier vidéo du disque ?"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,downloading,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Informations">
+                            <field name="channel_id" readonly="1"/>
+                            <field name="caption"/>
+                            <field name="telegram_date" readonly="1"/>
+                            <field name="mime_type" readonly="1"/>
+                        </group>
+                        <group string="Détails vidéo">
+                            <field name="video_duration_display" string="Durée" readonly="1"/>
+                            <field name="resolution_display" string="Résolution" readonly="1"/>
+                            <field name="file_size_display" string="Taille (Telegram)" readonly="1"/>
+                            <field name="file_name_telegram" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Progression du téléchargement -->
+                    <group invisible="state != 'downloading'">
+                        <div class="alert alert-info" role="alert">
+                            <strong>⬇️ Téléchargement en cours...</strong>
+                            <field name="progress" widget="progressbar" nolabel="1"/>
+                        </div>
+                    </group>
+
+                    <!-- Erreur -->
+                    <group invisible="not error_message">
+                        <div class="alert alert-danger" role="alert">
+                            <strong>❌ Erreur : </strong>
+                            <field name="error_message" readonly="1" nolabel="1"/>
+                        </div>
+                    </group>
+
+                    <!-- Fichier téléchargé -->
+                    <group string="Fichier téléchargé" invisible="state != 'done'">
+                        <group>
+                            <field name="file_name" readonly="1"/>
+                            <field name="file_path" readonly="1"/>
+                            <field name="file_size" string="Taille (Mo)" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="download_date" readonly="1"/>
+                            <field name="file_exists" readonly="1"/>
+                            <field name="external_media_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- IDs techniques -->
+                    <group string="Identifiants techniques" groups="base.group_no_one">
+                        <field name="telegram_message_id" readonly="1"/>
+                        <field name="telegram_document_id" readonly="1"/>
+                        <field name="telegram_access_hash" readonly="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_telegram_video_search" model="ir.ui.view">
+        <field name="name">telegram.channel.video.search</field>
+        <field name="model">telegram.channel.video</field>
+        <field name="arch" type="xml">
+            <search string="Vidéos Telegram">
+                <field name="name"/>
+                <field name="channel_id"/>
+                <field name="caption"/>
+                <filter name="filter_draft" string="Non téléchargé"
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_done" string="Téléchargé"
+                        domain="[('state', '=', 'done')]"/>
+                <filter name="filter_error" string="Erreur"
+                        domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <group expand="0" string="Grouper par">
+                    <filter name="groupby_channel" string="Canal"
+                            context="{'group_by': 'channel_id'}"/>
+                    <filter name="groupby_state" string="État"
+                            context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_telegram_video" model="ir.actions.act_window">
+        <field name="name">Vidéos Telegram</field>
+        <field name="res_model">telegram.channel.video</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_telegram_video_search"/>
+        <field name="context">{'search_default_filter_draft': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune vidéo Telegram trouvée
+            </p>
+            <p>
+                Scannez un canal Telegram pour découvrir ses vidéos.
+            </p>
+        </field>
+    </record>
+
+</odoo>

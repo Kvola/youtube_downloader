@@ -136,7 +136,9 @@
                             string="▶ Lire" class="btn-primary"
                             invisible="item_count == 0"/>
                     <button name="action_add_downloads" type="object"
-                            string="➕ Ajouter des médias" class="btn-secondary"/>
+                            string="➕ Ajouter des médias YouTube" class="btn-secondary"/>
+                    <button name="action_add_external_media" type="object"
+                            string="📂 Ajouter des médias externes" class="btn-secondary"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -168,8 +170,13 @@
                             <field name="item_ids">
                                 <tree editable="bottom" default_order="sequence">
                                     <field name="sequence" widget="handle"/>
+                                    <field name="item_type"/>
                                     <field name="download_id"
-                                           domain="[('state', '=', 'done')]"/>
+                                           domain="[('state', '=', 'done')]"
+                                           invisible="item_type != 'youtube'"/>
+                                    <field name="external_media_id"
+                                           domain="[('state', '=', 'done')]"
+                                           invisible="item_type != 'external'"/>
                                     <field name="name" readonly="1"/>
                                     <field name="video_author" readonly="1" optional="show"/>
                                     <field name="video_duration_display" string="Durée" readonly="1"/>

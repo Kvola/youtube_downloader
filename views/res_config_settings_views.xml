@@ -75,6 +75,53 @@
                         </setting>
                     </block>
 
+                    <block title="Telegram">
+                        <setting id="telegram_api_id"
+                                 string="API ID"
+                                 help="Obtenez votre API ID sur https://my.telegram.org → API development tools.">
+                            <field name="telegram_api_id"
+                                   placeholder="12345678"/>
+                        </setting>
+                        <setting id="telegram_api_hash"
+                                 string="API Hash"
+                                 help="Obtenez votre API Hash sur https://my.telegram.org → API development tools.">
+                            <field name="telegram_api_hash"
+                                   placeholder="abc123def456..."
+                                   password="True"/>
+                        </setting>
+                        <setting id="telegram_phone"
+                                 string="Numéro de téléphone"
+                                 help="Numéro de téléphone associé au compte Telegram (format international).">
+                            <field name="telegram_phone"
+                                   placeholder="+225XXXXXXXXXX"/>
+                        </setting>
+                        <setting id="telegram_session_path"
+                                 string="Chemin de session"
+                                 help="Chemin où stocker le fichier de session Telegram.">
+                            <field name="telegram_session_path"
+                                   placeholder="/tmp/youtube_downloads/telegram_session"/>
+                        </setting>
+                        <setting id="telegram_max_concurrent"
+                                 string="Téléchargements simultanés"
+                                 help="Nombre de vidéos Telegram téléchargées en parallèle (sémaphore asyncio). Recommandé : 2 à 5.">
+                            <field name="telegram_max_concurrent"/>
+                        </setting>
+                        <setting string="Version Telethon"
+                                 help="Librairie Python utilisée pour l'API Telegram.">
+                            <div class="d-flex align-items-center gap-2">
+                                <field name="telegram_telethon_version" readonly="1"/>
+                                <button name="action_install_telethon"
+                                        string="📦 Installer / Mettre à jour"
+                                        type="object"
+                                        class="btn btn-sm btn-outline-primary"/>
+                                <button name="action_telegram_authenticate"
+                                        string="🔐 Se connecter"
+                                        type="object"
+                                        class="btn btn-sm btn-outline-success"/>
+                            </div>
+                        </setting>
+                    </block>
+
                     <block title="Informations système">
                         <setting string="Version yt-dlp"
                                  help="Librairie Python utilisée pour les téléchargements.">

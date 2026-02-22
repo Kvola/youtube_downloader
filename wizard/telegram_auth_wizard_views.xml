@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════
+         Wizard d'authentification Telegram
+    ═══════════════════════════════════════════ -->
+
+    <record id="view_telegram_auth_wizard_form" model="ir.ui.view">
+        <field name="name">telegram.auth.wizard.form</field>
+        <field name="model">telegram.auth.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Connexion Telegram">
+                <div class="alert alert-info" role="alert"
+                     invisible="step != 'done'">
+                    <field name="info_message" readonly="1" nolabel="1"/>
+                </div>
+                <div class="alert alert-warning" role="alert"
+                     invisible="step == 'done'">
+                    <field name="info_message" readonly="1" nolabel="1"/>
+                </div>
+
+                <!-- Étape 1 : Envoi du code -->
+                <group invisible="step != 'send'">
+                    <group string="📱 Numéro de téléphone">
+                        <field name="phone" placeholder="+225XXXXXXXXXX"
+                               required="step == 'send'"/>
+                    </group>
+                </group>
+
+                <!-- Étape 2 : Saisie du code -->
+                <group invisible="step != 'verify'">
+                    <group string="🔑 Code de vérification">
+                        <field name="phone" readonly="1"/>
+                        <field name="verification_code"
+                               placeholder="12345"
+                               required="step == 'verify'"/>
+                    </group>
+                </group>
+
+                <!-- Étape 2bis : Mot de passe 2FA -->
+                <group invisible="step != 'password'">
+                    <group string="🔐 Vérification en 2 étapes">
+                        <field name="password_2fa"
+                               password="True"
+                               placeholder="Mot de passe 2FA"
+                               required="step == 'password'"/>
+                    </group>
+                </group>
+
+                <!-- Étape finale : Connecté -->
+                <group invisible="step != 'done'">
+                    <div class="text-center py-3">
+                        <h3>🎉 Connexion réussie !</h3>
+                        <p class="text-muted">
+                            Vous pouvez maintenant scanner vos canaux Telegram.
+                        </p>
+                    </div>
+                </group>
+
+                <field name="step" invisible="1"/>
+                <field name="phone_code_hash" invisible="1"/>
+
+                <footer>
+                    <!-- Bouton Envoyer le code -->
+                    <button name="action_send_code" type="object"
+                            string="📤 Envoyer le code"
+                            class="btn-primary"
+                            invisible="step != 'send'"/>
+
+                    <!-- Bouton Vérifier le code -->
+                    <button name="action_verify_code" type="object"
+                            string="✅ Vérifier le code"
+                            class="btn-primary"
+                            invisible="step != 'verify'"/>
+
+                    <!-- Bouton Mot de passe 2FA -->
+                    <button name="action_verify_password" type="object"
+                            string="🔐 Valider"
+                            class="btn-primary"
+                            invisible="step != 'password'"/>
+
+                    <!-- Bouton Déconnexion (visible si connecté) -->
+                    <button name="action_logout" type="object"
+                            string="🚪 Déconnecter"
+                            class="btn-danger"
+                            invisible="step != 'done'"
+                            confirm="Voulez-vous déconnecter votre session Telegram ?"/>
+
+                    <button string="Fermer" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_telegram_auth_wizard" model="ir.actions.act_window">
+        <field name="name">Connexion Telegram</field>
+        <field name="res_model">telegram.auth.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

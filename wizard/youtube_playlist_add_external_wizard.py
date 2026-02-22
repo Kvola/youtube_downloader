@@ -2,38 +2,38 @@
 from odoo import models, fields, api, _
 
 
-class YoutubePlaylistAddWizard(models.TransientModel):
-    _name = 'youtube.playlist.add.wizard'
-    _description = 'Ajouter des médias à la liste de lecture'
+class YoutubePlaylistAddExternalWizard(models.TransientModel):
+    _name = 'youtube.playlist.add.external.wizard'
+    _description = 'Ajouter des médias externes à la liste de lecture'
 
     playlist_id = fields.Many2one(
         'youtube.playlist',
         string='Liste de lecture',
         required=True,
     )
-    download_ids = fields.Many2many(
-        'youtube.download',
-        string='Médias à ajouter',
+    external_media_ids = fields.Many2many(
+        'youtube.external.media',
+        string='Médias externes à ajouter',
         domain="[('state', '=', 'done')]",
         required=True,
     )
 
     def action_add(self):
-        """Ajoute les téléchargements sélectionnés à la playlist."""
+        """Ajoute les médias externes sélectionnés à la playlist."""
         self.ensure_one()
-        existing = self.playlist_id.item_ids.filtered(
-            lambda i: i.item_type == 'youtube'
-        ).mapped('download_id')
+        existing_external = self.playlist_id.item_ids.filtered(
+            lambda i: i.item_type == 'external'
+        ).mapped('external_media_id')
         max_seq = max(self.playlist_id.item_ids.mapped('sequence') or [0])
         seq = max_seq
         vals_list = []
-        for dl in self.download_ids:
-            if dl not in existing:
+        for em in self.external_media_ids:
+            if em not in existing_external:
                 seq += 10
                 vals_list.append({
                     'playlist_id': self.playlist_id.id,
-                    'item_type': 'youtube',
-                    'download_id': dl.id,
+                    'item_type': 'external',
+                    'external_media_id': em.id,
                     'sequence': seq,
                 })
         if vals_list:

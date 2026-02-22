@@ -349,9 +349,9 @@
                     <field name="file_size_display" invisible="1"/>
 
                     <div class="yt_player_container">
-                        <!-- Lecteur Vidéo -->
+                        <!-- Lecteur Vidéo (tous formats vidéo, y compris non-natifs transcodés à la volée) -->
                         <div class="yt_player_media_wrapper"
-                             invisible="output_format in ('mp3', 'wav')">
+                             invisible="output_format in ('mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus')">
                             <video class="yt_player_video"
                                    controls="controls"
                                    preload="metadata"
@@ -362,8 +362,8 @@
                             </video>
                         </div>
 
-                        <!-- Lecteur Audio -->
-                        <div invisible="output_format not in ('mp3', 'wav')">
+                        <!-- Lecteur Audio (tous formats audio) -->
+                        <div invisible="output_format not in ('mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus')">
                             <div class="yt_player_audio_visual">
                                 <div class="yt_player_audio_placeholder">
                                     <span class="yt_player_audio_icon">🎵</span>

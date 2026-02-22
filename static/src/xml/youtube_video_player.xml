@@ -295,6 +295,7 @@
                             recordId="state.recordData.id"
                             recordName="state.recordData.name"
                             isAudio="state.recordData.isAudio"
+                            streamUrl="state.recordData.streamUrl"
                             thumbnailUrl="state.recordData.thumbnailUrl"
                             videoAuthor="state.recordData.videoAuthor"
                             videoDuration="state.recordData.videoDuration"

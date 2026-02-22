@@ -2766,3 +2766,365 @@
         display: none;
     }
 }
+
+/* ========================================================================================
+   DASHBOARD — SECTIONS TELEGRAM & MÉDIAS EXTERNES & GLOBAL BAR
+======================================================================================== */
+
+/* ─── Barre synthèse globale ─── */
+.yt_global_bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-radius: var(--yt-radius);
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--yt-shadow-md);
+    flex-wrap: wrap;
+}
+
+.yt_global_item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.yt_global_icon {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.yt_global_info {
+    display: flex;
+    flex-direction: column;
+}
+
+.yt_global_value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.yt_global_label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.yt_global_sep {
+    width: 1px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.yt_text_accent { color: var(--yt-info) !important; }
+.yt_text_danger { color: var(--yt-danger) !important; }
+
+.yt_global_sources {
+    display: flex;
+    gap: 8px;
+}
+
+.yt_source_pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.yt_source_yt { background: rgba(255, 0, 0, 0.3); }
+.yt_source_tg { background: rgba(0, 136, 204, 0.3); }
+.yt_source_ext { background: rgba(124, 77, 255, 0.3); }
+
+/* ─── Section titles ─── */
+.yt_section_title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--yt-text);
+    margin: 24px 0 12px;
+    padding-left: 4px;
+}
+
+.yt_section_icon {
+    font-size: 18px;
+}
+
+.yt_section_icon_yt { color: var(--yt-red); }
+.yt_section_icon_tg { color: #0088cc; }
+.yt_section_icon_ext { color: var(--yt-purple); }
+
+/* ─── Telegram section ─── */
+.yt_dash_row_tg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.yt_tg_kpi_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.yt_tg_kpi {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border-radius: var(--yt-radius-sm);
+    background: var(--yt-bg);
+    cursor: pointer;
+    transition: all var(--yt-transition);
+}
+
+.yt_tg_kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--yt-shadow);
+}
+
+.yt_tg_kpi_icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.yt_kpi_icon_tg_channels {
+    background: rgba(0, 136, 204, 0.1);
+    color: #0088cc;
+}
+
+.yt_kpi_icon_tg_total {
+    background: var(--yt-info-soft);
+    color: var(--yt-info);
+}
+
+.yt_kpi_icon_tg_done {
+    background: var(--yt-success-soft);
+    color: var(--yt-success);
+}
+
+.yt_kpi_icon_tg_error {
+    background: var(--yt-danger-soft);
+    color: var(--yt-danger);
+}
+
+.yt_tg_kpi_val {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--yt-text);
+    line-height: 1;
+}
+
+.yt_tg_kpi_lbl {
+    font-size: 11px;
+    color: var(--yt-text-secondary);
+    text-align: center;
+}
+
+.yt_tg_meta_bar {
+    display: flex;
+    gap: 16px;
+    padding: 10px 12px;
+    background: var(--yt-bg);
+    border-radius: var(--yt-radius-sm);
+}
+
+.yt_tg_meta_item {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: var(--yt-text-secondary);
+}
+
+.yt_tg_meta_item i { color: var(--yt-text-muted); }
+
+/* ─── Telegram channels list ─── */
+.yt_tg_channel_item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--yt-border);
+    cursor: pointer;
+    transition: background var(--yt-transition);
+}
+
+.yt_tg_channel_item:last-child { border-bottom: none; }
+.yt_tg_channel_item:hover { background: var(--yt-bg); }
+
+.yt_tg_ch_icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0088cc, #00aaff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.yt_tg_ch_info { flex: 1; min-width: 0; }
+
+.yt_tg_ch_name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--yt-text);
+}
+
+.yt_tg_ch_meta {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--yt-text-muted);
+    margin-top: 2px;
+}
+
+.yt_tg_ch_progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    width: 80px;
+}
+
+.yt_fill_tg {
+    background: linear-gradient(90deg, #0088cc, #00aaff) !important;
+}
+
+.yt_pct_small { font-size: 10px; }
+
+/* ─── External Media section ─── */
+.yt_ext_card {
+    background: var(--yt-card-bg);
+    border-radius: var(--yt-radius);
+    box-shadow: var(--yt-shadow);
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.yt_ext_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+}
+
+.yt_ext_kpi {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    border-radius: var(--yt-radius-sm);
+    background: var(--yt-bg);
+    cursor: pointer;
+    transition: all var(--yt-transition);
+}
+
+.yt_ext_kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--yt-shadow);
+}
+
+.yt_ext_kpi_icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.yt_ext_icon_total {
+    background: var(--yt-purple-soft);
+    color: var(--yt-purple);
+}
+
+.yt_ext_icon_video {
+    background: var(--yt-info-soft);
+    color: var(--yt-info);
+}
+
+.yt_ext_icon_audio {
+    background: var(--yt-orange-soft);
+    color: var(--yt-orange);
+}
+
+.yt_ext_icon_size {
+    background: rgba(0, 191, 165, 0.1);
+    color: var(--yt-teal);
+}
+
+.yt_ext_icon_duration {
+    background: var(--yt-warning-soft);
+    color: var(--yt-warning);
+}
+
+.yt_ext_kpi_val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--yt-text);
+    line-height: 1;
+}
+
+.yt_ext_val_sm { font-size: 16px; }
+
+.yt_ext_kpi_lbl {
+    font-size: 11px;
+    color: var(--yt-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── Quick action buttons for new sources ─── */
+.yt_action_tg {
+    border-color: #0088cc !important;
+    color: #0088cc !important;
+}
+.yt_action_tg:hover {
+    background: rgba(0, 136, 204, 0.1) !important;
+}
+
+.yt_action_ext {
+    border-color: var(--yt-purple) !important;
+    color: var(--yt-purple) !important;
+}
+.yt_action_ext:hover {
+    background: var(--yt-purple-soft) !important;
+}
+
+/* ─── Responsive for new sections ─── */
+@media (max-width: 768px) {
+    .yt_global_bar {
+        gap: 12px;
+        padding: 12px 16px;
+    }
+    .yt_global_value { font-size: 14px; }
+    .yt_global_sep { display: none; }
+    .yt_global_sources { width: 100%; justify-content: center; margin-top: 8px; }
+
+    .yt_dash_row_tg {
+        grid-template-columns: 1fr;
+    }
+    .yt_ext_grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
