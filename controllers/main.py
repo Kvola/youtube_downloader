@@ -51,6 +51,20 @@ def _needs_transcoding(ext):
     return ext not in BROWSER_COMPATIBLE_VIDEO
 
 
+def _find_mp4_companion(file_path):
+    """
+    Vérifie si une version MP4 du fichier existe déjà (conversion précédente).
+    Retourne le chemin MP4 si trouvé, sinon None.
+    """
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext == '.mp4':
+        return None
+    mp4_path = os.path.splitext(file_path)[0] + '.mp4'
+    if os.path.exists(mp4_path) and os.path.getsize(mp4_path) > 0:
+        return mp4_path
+    return None
+
+
 def _ffmpeg_available():
     """Vérifie si ffmpeg est disponible sur le système."""
     return shutil.which('ffmpeg') is not None
@@ -320,6 +334,16 @@ class YoutubeDownloaderController(http.Controller):
             content_type = CONTENT_TYPE_MAP.get(ext, 'application/octet-stream')
             range_header = request.httprequest.headers.get('Range')
 
+            # Vérifier si une version MP4 existe déjà (conversion antérieure)
+            if _needs_transcoding(ext):
+                mp4_companion = _find_mp4_companion(file_path)
+                if mp4_companion:
+                    _logger.info("Version MP4 trouvée pour %s, streaming direct", file_path)
+                    file_path = mp4_companion
+                    file_size = os.path.getsize(file_path)
+                    ext = '.mp4'
+                    content_type = 'video/mp4'
+
             # Si le format n'est pas lisible nativement par le navigateur → transcodage ffmpeg
             if _needs_transcoding(ext) and _ffmpeg_available():
                 _logger.info("Format %s non compatible navigateur, transcodage à la volée", ext)
@@ -371,6 +395,16 @@ class YoutubeDownloaderController(http.Controller):
             content_type = CONTENT_TYPE_MAP.get(ext, 'application/octet-stream')
             range_header = request.httprequest.headers.get('Range')
 
+            # Vérifier si une version MP4 existe déjà (conversion antérieure)
+            if _needs_transcoding(ext):
+                mp4_companion = _find_mp4_companion(file_path)
+                if mp4_companion:
+                    _logger.info("Version MP4 trouvée pour %s (external), streaming direct", file_path)
+                    file_path = mp4_companion
+                    file_size = os.path.getsize(file_path)
+                    ext = '.mp4'
+                    content_type = 'video/mp4'
+
             # Si le format n'est pas lisible nativement par le navigateur → transcodage ffmpeg
             if _needs_transcoding(ext) and _ffmpeg_available():
                 _logger.info("Format %s non compatible navigateur (external), transcodage à la volée", ext)
@@ -421,6 +455,16 @@ class YoutubeDownloaderController(http.Controller):
             ext = os.path.splitext(file_path)[1].lower()
             content_type = CONTENT_TYPE_MAP.get(ext, 'video/mp4')
             range_header = request.httprequest.headers.get('Range')
+
+            # Vérifier si une version MP4 existe déjà (conversion antérieure)
+            if _needs_transcoding(ext):
+                mp4_companion = _find_mp4_companion(file_path)
+                if mp4_companion:
+                    _logger.info("Version MP4 trouvée pour %s (telegram), streaming direct", file_path)
+                    file_path = mp4_companion
+                    file_size = os.path.getsize(file_path)
+                    ext = '.mp4'
+                    content_type = 'video/mp4'
 
             # Si le format n'est pas lisible nativement par le navigateur → transcodage ffmpeg
             if _needs_transcoding(ext) and _ffmpeg_available():

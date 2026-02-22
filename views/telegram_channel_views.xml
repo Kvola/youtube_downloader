@@ -321,6 +321,10 @@
                     <button name="action_open_external_media" type="object"
                             string="🎬 Voir le média" class="btn-secondary"
                             invisible="not external_media_id"/>
+                    <button name="action_convert_to_mp4" type="object"
+                            string="🔄 Convertir en MP4" class="btn-warning"
+                            invisible="state != 'done'"
+                            confirm="Convertir le fichier en MP4 pour une meilleure compatibilité navigateur ?"/>
                     <button name="action_delete_file" type="object"
                             string="🗑️ Supprimer le fichier" class="btn-danger"
                             invisible="state != 'done'"

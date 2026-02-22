@@ -41,6 +41,12 @@
                             type="object"
                             class="btn-info"
                             invisible="state != 'done' or not file_exists"/>
+                    <button name="action_convert_to_mp4"
+                            string="🔄 Convertir en MP4"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state != 'done' or not file_exists or output_format in ('mp4', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus')"
+                            confirm="Convertir le fichier en MP4 pour une meilleure compatibilité navigateur ?"/>
                     <button name="action_reset_draft"
                             string="↩ Remettre en brouillon"
                             type="object"
@@ -263,6 +269,12 @@
                                                 type="object"
                                                 class="btn btn-secondary me-2"
                                                 invisible="not file_exists"/>
+                                        <button name="action_convert_to_mp4"
+                                                string="🔄 Convertir en MP4"
+                                                type="object"
+                                                class="btn btn-warning me-2"
+                                                invisible="output_format in ('mp4', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus')"
+                                                confirm="Convertir le fichier en MP4 pour une meilleure compatibilité navigateur ?"/>
                                         <button name="action_delete_file"
                                                 string="🗑️ Supprimer le fichier"
                                                 type="object"

@@ -44,6 +44,10 @@
                     <button name="action_add_to_playlist" type="object"
                             string="🎵 Ajouter à une playlist" class="btn-secondary"
                             invisible="state != 'done'"/>
+                    <button name="action_convert_to_mp4" type="object"
+                            string="🔄 Convertir en MP4" class="btn-warning"
+                            invisible="state != 'done' or media_type != 'video'"
+                            confirm="Convertir le fichier en MP4 pour une meilleure compatibilité navigateur ?"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
                 </header>
                 <sheet>

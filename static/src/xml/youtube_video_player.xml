@@ -29,8 +29,10 @@
                         <h4 class="yt_player_error_title">Impossible de lire ce média</h4>
                         <p class="yt_player_error_text" t-esc="state.errorMessage"/>
                         <p class="yt_player_error_hint">
-                            Certains formats (MKV, WAV) peuvent ne pas être
-                            supportés par votre navigateur.
+                            Certains formats (MKV, AVI, MOV...) ne sont pas supportés
+                            nativement par le navigateur. Utilisez le bouton
+                            « 🔄 Convertir en MP4 » dans le formulaire pour
+                            convertir le fichier en format compatible.
                         </p>
                         <button class="yt_player_error_btn" t-on-click="onDownload">
                             <i class="fa fa-download me-2"/>Télécharger le fichier

@@ -2,6 +2,8 @@
 import base64
 import os
 import logging
+import shutil
+import subprocess
 import uuid
 
 from odoo import models, fields, api, _
@@ -215,6 +217,18 @@ class YoutubeExternalMedia(models.Model):
             })
 
             _logger.info("Média externe sauvegardé : %s (%.2f Mo)", dest_path, file_size_mb)
+
+            # Auto-convertir en MP4 si le format vidéo n'est pas compatible navigateur
+            browser_compatible = {'.mp4', '.webm', '.ogg', '.ogv'}
+            if ext in ALLOWED_VIDEO_EXTENSIONS and ext not in browser_compatible:
+                try:
+                    self._remux_to_mp4(dest_path)
+                except Exception as conv_err:
+                    _logger.warning(
+                        "Auto-conversion MP4 échouée pour média externe [%s] : %s",
+                        dest_path, str(conv_err),
+                    )
+
         except Exception as e:
             _logger.error("Erreur sauvegarde média externe : %s", str(e))
             raise UserError(_(
@@ -262,6 +276,113 @@ class YoutubeExternalMedia(models.Model):
     def _compute_in_playlist(self):
         for rec in self:
             rec.in_playlist_count = len(rec.in_playlist_item_ids)
+
+    # ─── Conversion MP4 ──────────────────────────────────────────────────────
+    def _remux_to_mp4(self, source_path):
+        """
+        Remuxe un fichier vidéo non compatible navigateur vers MP4.
+        Utilise 'ffmpeg -c copy' (quasi-instantané), avec fallback ré-encodage.
+        """
+        if not source_path or not os.path.exists(source_path):
+            return
+        if not shutil.which('ffmpeg'):
+            _logger.warning("ffmpeg non disponible, impossible de convertir en MP4")
+            return
+
+        ext = os.path.splitext(source_path)[1].lower()
+        if ext == '.mp4':
+            return
+
+        mp4_path = os.path.splitext(source_path)[0] + '.mp4'
+
+        # Essayer le remuxage rapide
+        cmd_remux = [
+            'ffmpeg', '-i', source_path,
+            '-c', 'copy',
+            '-movflags', '+faststart',
+            '-y',
+            mp4_path,
+        ]
+        _logger.info("Remuxage externe %s → MP4...", ext)
+        try:
+            result = subprocess.run(cmd_remux, capture_output=True, timeout=300)
+            if result.returncode != 0:
+                _logger.info("Remuxage échoué, ré-encodage rapide %s → MP4...", ext)
+                if os.path.exists(mp4_path):
+                    os.remove(mp4_path)
+                cmd_encode = [
+                    'ffmpeg', '-i', source_path,
+                    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
+                    '-c:a', 'aac', '-b:a', '192k',
+                    '-movflags', '+faststart',
+                    '-y',
+                    mp4_path,
+                ]
+                result = subprocess.run(cmd_encode, capture_output=True, timeout=3600)
+                if result.returncode != 0:
+                    stderr_msg = result.stderr.decode('utf-8', errors='replace')[-300:]
+                    raise Exception(f"Ré-encodage échoué: {stderr_msg}")
+
+            if not os.path.exists(mp4_path) or os.path.getsize(mp4_path) == 0:
+                raise Exception("Le fichier MP4 généré est vide ou inexistant")
+
+            new_size_mb = os.path.getsize(mp4_path) / (1024 * 1024)
+            new_file_name = os.path.basename(mp4_path)
+            self.sudo().write({
+                'file_path': mp4_path,
+                'file_name': new_file_name,
+                'file_size': round(new_size_mb, 2),
+            })
+
+            try:
+                if os.path.exists(source_path) and source_path != mp4_path:
+                    os.remove(source_path)
+            except Exception:
+                _logger.warning("Impossible de supprimer l'ancien fichier: %s", source_path)
+
+            _logger.info("Conversion MP4 externe réussie : %s → %s", source_path, mp4_path)
+
+        except subprocess.TimeoutExpired:
+            _logger.error("Timeout lors de la conversion MP4 de %s", source_path)
+            if os.path.exists(mp4_path):
+                os.remove(mp4_path)
+            raise
+        except Exception as e:
+            _logger.error("Erreur conversion MP4 externe : %s", str(e))
+            if os.path.exists(mp4_path) and os.path.getsize(mp4_path) == 0:
+                os.remove(mp4_path)
+            raise
+
+    def action_convert_to_mp4(self):
+        """
+        Action manuelle pour convertir un fichier externe non compatible en MP4.
+        """
+        self.ensure_one()
+        if self.state != 'done':
+            raise UserError(_("Le média n'est pas prêt."))
+        if not self.file_path or not os.path.exists(self.file_path):
+            raise UserError(_("Le fichier n'existe pas sur le serveur."))
+
+        ext = os.path.splitext(self.file_path)[1].lower()
+        if ext == '.mp4':
+            raise UserError(_("Le fichier est déjà au format MP4."))
+        if ext in ALLOWED_AUDIO_EXTENSIONS:
+            raise UserError(_("Ce fichier est un fichier audio, la conversion en MP4 n'est pas applicable."))
+        if not shutil.which('ffmpeg'):
+            raise UserError(_("ffmpeg n'est pas installé sur le serveur. La conversion est impossible."))
+
+        self._remux_to_mp4(self.file_path)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _("Conversion réussie"),
+                'message': _("Le fichier a été converti en MP4 avec succès."),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
     # ─── Actions ──────────────────────────────────────────────────────────────
     def action_set_done(self):
