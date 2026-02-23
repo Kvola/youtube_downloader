@@ -79,6 +79,18 @@ class AppConstants {
   static const String qualitiesEndpoint = '$apiBase/qualities';
   static const String dashboardEndpoint = '$apiBase/dashboard';
 
+  // YouTube Accounts
+  static const String accountsEndpoint = '$apiBase/accounts';
+  static const String createAccountEndpoint = '$apiBase/accounts/create';
+  static String validateAccountEndpoint(int id) =>
+      '$apiBase/accounts/$id/validate';
+  static String setDefaultAccountEndpoint(int id) =>
+      '$apiBase/accounts/$id/set-default';
+  static String refreshAccountEndpoint(int id) =>
+      '$apiBase/accounts/$id/refresh';
+  static String deleteAccountEndpoint(int id) =>
+      '$apiBase/accounts/$id/delete';
+
   static String downloadStatusEndpoint(int id) =>
       '$apiBase/download/status/$id';
   static String downloadFileEndpoint(int id) =>

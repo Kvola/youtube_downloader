@@ -60,6 +60,13 @@ class YoutubeDownloadWizard(models.TransientModel):
         ('2', 'Haute'),
         ('3', 'Urgente'),
     ], string='Priorité', default='0')
+    youtube_account_id = fields.Many2one(
+        'youtube.account',
+        string='Compte YouTube',
+        domain="[('state', '=', 'valid'), ('active', '=', True)]",
+        help="Compte YouTube à utiliser pour le téléchargement. "
+             "Laissez vide pour utiliser le compte par défaut.",
+    )
 
     url_count = fields.Integer(compute='_compute_url_count')
     playlist_count = fields.Integer(compute='_compute_url_count')
@@ -131,6 +138,7 @@ class YoutubeDownloadWizard(models.TransientModel):
                 'max_retries': self.max_retries,
                 'priority': self.priority,
                 'is_playlist': is_playlist,
+                'youtube_account_id': self.youtube_account_id.id or False,
             }
             if self.download_path:
                 vals['download_path'] = self.download_path

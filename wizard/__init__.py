@@ -7,3 +7,4 @@ from . import youtube_playlist_add_external_wizard
 from . import youtube_playlist_add_external_single_wizard
 from . import telegram_auth_wizard
 from . import audio_repair_wizard
+from . import youtube_account_refresh_wizard

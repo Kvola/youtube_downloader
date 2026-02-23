@@ -46,6 +46,7 @@ Module complet de téléchargement YouTube avec :
         'data/server_actions.xml',
         'data/ir_cron.xml',
         'views/youtube_download_views.xml',
+        'views/youtube_account_views.xml',
         'views/youtube_playlist_views.xml',
         'views/youtube_external_media_views.xml',
         'views/telegram_channel_views.xml',

@@ -26,6 +26,10 @@ class Download {
   final bool isPlaylist;
   final String createdAt;
 
+  // Compte YouTube associé
+  final int? youtubeAccountId;
+  final String youtubeAccountName;
+
   // Champs locaux (non-API) pour le stockage sur le téléphone
   String? localFilePath;
   bool isDownloadedLocally;
@@ -56,6 +60,8 @@ class Download {
     this.retryCount = 0,
     this.isPlaylist = false,
     this.createdAt = '',
+    this.youtubeAccountId,
+    this.youtubeAccountName = '',
     this.localFilePath,
     this.isDownloadedLocally = false,
   });
@@ -87,6 +93,12 @@ class Download {
       retryCount: json['retry_count'] ?? 0,
       isPlaylist: json['is_playlist'] ?? false,
       createdAt: json['created_at'] ?? '',
+      youtubeAccountId: json['youtube_account'] != null
+          ? json['youtube_account']['id'] as int?
+          : null,
+      youtubeAccountName: json['youtube_account'] != null
+          ? (json['youtube_account']['name'] ?? '')
+          : '',
     );
   }
 
@@ -174,6 +186,8 @@ class Download {
       retryCount: retryCount,
       isPlaylist: isPlaylist,
       createdAt: createdAt,
+      youtubeAccountId: youtubeAccountId,
+      youtubeAccountName: youtubeAccountName,
       localFilePath: localFilePath ?? this.localFilePath,
       isDownloadedLocally: isDownloadedLocally ?? this.isDownloadedLocally,
     );

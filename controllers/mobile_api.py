@@ -540,13 +540,16 @@ class YoutubeDownloaderMobileAPI(http.Controller):
             'skip_download': True,
         }
 
-        # Ajouter les cookies si configuré
-        cookie_file = request.env['ir.config_parameter'].sudo().get_param(
-            'youtube_downloader.cookie_file', ''
-        )
-        if cookie_file:
-            import os
-            if os.path.isfile(cookie_file):
+        # Ajouter les cookies si configuré (priorité : compte par défaut > fichier global)
+        import os
+        account = request.env['youtube.account'].sudo().get_default_account()
+        if account and account.state == 'valid':
+            ydl_opts.update(account.get_yt_dlp_opts())
+        else:
+            cookie_file = request.env['ir.config_parameter'].sudo().get_param(
+                'youtube_downloader.cookie_file', ''
+            )
+            if cookie_file and os.path.isfile(cookie_file):
                 ydl_opts['cookiefile'] = cookie_file
 
         try:
@@ -639,6 +642,7 @@ class YoutubeDownloaderMobileAPI(http.Controller):
                 'quality': quality,
                 'output_format': output_format,
                 'user_id': user.id,
+                'youtube_account_id': body.get('youtube_account_id') or False,
             })
 
             # Récupérer les infos de la vidéo
@@ -997,12 +1001,241 @@ class YoutubeDownloaderMobileAPI(http.Controller):
             ],
         })
 
+    # ─── COMPTES YOUTUBE ─────────────────────────────────────────────────
+
+    @http.route('/api/v1/youtube/accounts', type='http', auth='none',
+                methods=['GET', 'OPTIONS'], csrf=False, cors='*')
+    @api_exception_handler
+    @require_auth
+    def api_accounts_list(self, **kwargs):
+        """Liste les comptes YouTube de l'utilisateur."""
+        user = request.api_user
+        AccountModel = request.env['youtube.account'].with_user(user).sudo()
+
+        accounts = AccountModel.search([
+            ('user_id', '=', user.id),
+            ('active', '=', True),
+        ], order='is_default desc, name')
+
+        return _json_response(data={
+            'accounts': [_serialize_account(acc) for acc in accounts],
+            'total': len(accounts),
+        })
+
+    @http.route('/api/v1/youtube/accounts/create', type='http', auth='none',
+                methods=['POST', 'OPTIONS'], csrf=False, cors='*')
+    @api_exception_handler
+    @require_auth
+    def api_accounts_create(self, **kwargs):
+        """Crée un nouveau compte YouTube avec cookies."""
+        import base64
+
+        body = _get_json_body()
+        name = body.get('name', '').strip()
+        cookie_content = body.get('cookie_content', '').strip()
+        email_hint = body.get('email_hint', '').strip()
+
+        if not name:
+            return _json_error(
+                message="Le nom du compte est requis",
+                code='VAL_010',
+                status=400,
+            )
+        if not cookie_content:
+            return _json_error(
+                message="Le contenu du fichier cookies.txt est requis",
+                code='VAL_011',
+                status=400,
+            )
+
+        # Valider le format cookies
+        if (
+            '# Netscape HTTP Cookie File' not in cookie_content
+            and '# HTTP Cookie File' not in cookie_content
+            and '.youtube.com' not in cookie_content
+        ):
+            return _json_error(
+                message="Le contenu ne semble pas être un cookies.txt valide. "
+                        "Il doit contenir '# Netscape HTTP Cookie File' et "
+                        "des cookies .youtube.com",
+                code='VAL_012',
+                status=400,
+            )
+
+        user = request.api_user
+        AccountModel = request.env['youtube.account'].with_user(user).sudo()
+
+        try:
+            # Encoder en base64 pour le champ Binary
+            cookie_b64 = base64.b64encode(cookie_content.encode('utf-8')).decode('ascii')
+
+            account = AccountModel.create({
+                'name': name,
+                'auth_method': 'cookie_file',
+                'cookie_file_content': cookie_b64,
+                'cookie_file_name': f'{name}_cookies.txt',
+                'email_hint': email_hint,
+                'user_id': user.id,
+            })
+
+            return _json_response(
+                data=_serialize_account(account),
+                message="Compte YouTube créé",
+            )
+        except Exception as e:
+            _logger.warning("Erreur création compte YouTube: %s", str(e))
+            return _json_error(
+                message="Erreur lors de la création du compte",
+                code='BUS_010',
+                status=422,
+            )
+
+    @http.route('/api/v1/youtube/accounts/<int:account_id>/validate', type='http', auth='none',
+                methods=['POST', 'OPTIONS'], csrf=False, cors='*')
+    @api_exception_handler
+    @require_auth
+    def api_accounts_validate(self, account_id, **kwargs):
+        """Valide un compte YouTube (teste la connexion)."""
+        user = request.api_user
+        AccountModel = request.env['youtube.account'].with_user(user).sudo()
+
+        account = AccountModel.browse(account_id)
+        if not account.exists() or account.user_id.id != user.id:
+            return _json_error(
+                message="Compte YouTube introuvable",
+                code='NOT_FOUND',
+                status=404,
+            )
+
+        try:
+            account.action_test_connection()
+            # Relire le compte après validation
+            account.invalidate_recordset()
+            return _json_response(
+                data=_serialize_account(account),
+                message="Compte validé avec succès",
+            )
+        except Exception as e:
+            # Relire le compte après erreur
+            account.invalidate_recordset()
+            return _json_response(
+                data=_serialize_account(account),
+                success=False,
+                message=str(e),
+            )
+
+    @http.route('/api/v1/youtube/accounts/<int:account_id>/set-default', type='http', auth='none',
+                methods=['POST', 'OPTIONS'], csrf=False, cors='*')
+    @api_exception_handler
+    @require_auth
+    def api_accounts_set_default(self, account_id, **kwargs):
+        """Définit un compte comme compte par défaut."""
+        user = request.api_user
+        AccountModel = request.env['youtube.account'].with_user(user).sudo()
+
+        account = AccountModel.browse(account_id)
+        if not account.exists() or account.user_id.id != user.id:
+            return _json_error(
+                message="Compte YouTube introuvable",
+                code='NOT_FOUND',
+                status=404,
+            )
+
+        account.action_set_default()
+        return _json_response(
+            data=_serialize_account(account),
+            message="Compte défini par défaut",
+        )
+
+    @http.route('/api/v1/youtube/accounts/<int:account_id>/refresh', type='http', auth='none',
+                methods=['POST', 'OPTIONS'], csrf=False, cors='*')
+    @api_exception_handler
+    @require_auth
+    def api_accounts_refresh(self, account_id, **kwargs):
+        """Met à jour les cookies d'un compte YouTube."""
+        import base64
+
+        body = _get_json_body()
+        cookie_content = body.get('cookie_content', '').strip()
+
+        if not cookie_content:
+            return _json_error(
+                message="Le contenu du fichier cookies.txt est requis",
+                code='VAL_011',
+                status=400,
+            )
+
+        user = request.api_user
+        AccountModel = request.env['youtube.account'].with_user(user).sudo()
+
+        account = AccountModel.browse(account_id)
+        if not account.exists() or account.user_id.id != user.id:
+            return _json_error(
+                message="Compte YouTube introuvable",
+                code='NOT_FOUND',
+                status=404,
+            )
+
+        try:
+            cookie_b64 = base64.b64encode(cookie_content.encode('utf-8')).decode('ascii')
+            account.write({
+                'cookie_file_content': cookie_b64,
+                'cookie_file_name': f'{account.name}_cookies.txt',
+            })
+            account.action_test_connection()
+            account.invalidate_recordset()
+            return _json_response(
+                data=_serialize_account(account),
+                message="Cookies mis à jour et validés",
+            )
+        except Exception as e:
+            account.invalidate_recordset()
+            return _json_response(
+                data=_serialize_account(account),
+                success=False,
+                message=str(e),
+            )
+
+    @http.route('/api/v1/youtube/accounts/<int:account_id>/delete', type='http', auth='none',
+                methods=['POST', 'OPTIONS'], csrf=False, cors='*')
+    @api_exception_handler
+    @require_auth
+    def api_accounts_delete(self, account_id, **kwargs):
+        """Supprime un compte YouTube."""
+        user = request.api_user
+        AccountModel = request.env['youtube.account'].with_user(user).sudo()
+
+        account = AccountModel.browse(account_id)
+        if not account.exists() or account.user_id.id != user.id:
+            return _json_error(
+                message="Compte YouTube introuvable",
+                code='NOT_FOUND',
+                status=404,
+            )
+
+        account.unlink()
+        return _json_response(message="Compte supprimé")
+
 
 # ==================== SERIALISATION ====================
 
+def _serialize_account(account):
+    """Sérialise un enregistrement youtube.account pour l'API."""
+    return {
+        'id': account.id,
+        'name': account.name or '',
+        'state': account.state,
+        'is_default': account.is_default,
+        'channel_name': account.channel_name or '',
+        'email_hint': account.email_hint or '',
+        'last_validated': account.last_validated.isoformat() if account.last_validated else '',
+        'created_at': account.create_date.isoformat() if account.create_date else '',
+    }
+
+
 def _serialize_download(record):
     """Sérialise un enregistrement youtube.download pour l'API."""
-    return {
+    data = {
         'id': record.id,
         'reference': record.reference or '',
         'name': record.name or record.video_title or '',
@@ -1029,3 +1262,9 @@ def _serialize_download(record):
         'is_playlist': record.is_playlist,
         'created_at': record.create_date.isoformat() if record.create_date else '',
     }
+    # Ajouter le compte YouTube si présent
+    if hasattr(record, 'youtube_account_id') and record.youtube_account_id:
+        data['youtube_account'] = _serialize_account(record.youtube_account_id)
+    else:
+        data['youtube_account'] = None
+    return data

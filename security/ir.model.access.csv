@@ -24,3 +24,6 @@ access_telegram_channel_video_user,telegram.channel.video user,model_telegram_ch
 access_telegram_channel_video_manager,telegram.channel.video manager,model_telegram_channel_video,group_youtube_manager,1,1,1,1
 access_telegram_auth_wizard_user,telegram.auth.wizard user,model_telegram_auth_wizard,group_youtube_user,1,1,1,1
 access_audio_repair_wizard_user,audio.repair.wizard user,model_audio_repair_wizard,group_youtube_user,1,1,1,1
+access_youtube_account_user,youtube.account user,model_youtube_account,group_youtube_user,1,1,1,0
+access_youtube_account_manager,youtube.account manager,model_youtube_account,group_youtube_manager,1,1,1,1
+access_youtube_account_refresh_wizard_user,youtube.account.refresh.wizard user,model_youtube_account_refresh_wizard,group_youtube_user,1,1,1,1

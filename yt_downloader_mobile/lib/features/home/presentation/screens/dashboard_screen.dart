@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../downloads/presentation/providers/download_provider.dart';
 import '../../../downloads/presentation/widgets/active_download_card.dart';
+import '../../../youtube_accounts/presentation/screens/youtube_accounts_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -46,11 +47,28 @@ class DashboardScreen extends ConsumerWidget {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
-              if (value == 'logout') {
+              if (value == 'accounts') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const YouTubeAccountsScreen(),
+                  ),
+                );
+              } else if (value == 'logout') {
                 _showLogoutDialog(context, ref);
               }
             },
             itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'accounts',
+                child: Row(
+                  children: [
+                    Icon(Icons.account_circle, size: 20, color: AppColors.info),
+                    SizedBox(width: 8),
+                    Text('Comptes YouTube'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'logout',
                 child: Row(

@@ -276,6 +276,16 @@ class YoutubeDownload(models.Model):
         ('3', 'Urgente'),
     ], string='Priorité', default='0', index=True)
 
+    # ─── Compte YouTube ───────────────────────────────────────────────────────
+    youtube_account_id = fields.Many2one(
+        'youtube.account',
+        string='Compte YouTube',
+        domain="[('state', '=', 'valid'), ('active', '=', True)]",
+        tracking=True,
+        help="Sélectionnez un compte YouTube connecté pour éviter les problèmes de cookies. "
+             "Laissez vide pour utiliser la configuration globale.",
+    )
+
     # ─── Listes de lecture ─────────────────────────────────────────────────────
     in_playlist_item_ids = fields.One2many(
         'youtube.playlist.item',
@@ -496,7 +506,25 @@ class YoutubeDownload(models.Model):
             ))
 
     def _get_cookie_opts(self):
-        """Retourne les options de cookies pour yt-dlp si configuré."""
+        """Retourne les options de cookies pour yt-dlp.
+
+        Priorité :
+        1. Compte YouTube sélectionné sur le téléchargement
+        2. Compte YouTube par défaut de l'utilisateur
+        3. Fichier cookies global (config_parameter)
+        """
+        # 1. Compte YouTube spécifique au téléchargement
+        account = self.youtube_account_id
+        if not account:
+            # 2. Compte par défaut de l'utilisateur
+            account = self.env['youtube.account'].get_default_account()
+
+        if account and account.state == 'valid':
+            opts = account.get_yt_dlp_opts()
+            if opts:
+                return opts
+
+        # 3. Fallback : fichier cookies global
         cookie_file = self.env['ir.config_parameter'].sudo().get_param(
             'youtube_downloader.cookie_file', ''
         )
@@ -791,6 +819,7 @@ class YoutubeDownload(models.Model):
                         'auto_retry': self.auto_retry,
                         'max_retries': self.max_retries,
                         'priority': self.priority,
+                        'youtube_account_id': self.youtube_account_id.id,
                     })
                     created_ids.append(child.id)
 

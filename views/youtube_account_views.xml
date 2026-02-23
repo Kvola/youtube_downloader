@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE FORMULAIRE — youtube.account
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_account_form" model="ir.ui.view">
+        <field name="name">youtube.account.form</field>
+        <field name="model">youtube.account</field>
+        <field name="arch" type="xml">
+            <form string="Compte YouTube">
+                <header>
+                    <button name="action_save_and_validate"
+                            string="✅ Sauvegarder et Valider"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state == 'valid'"/>
+                    <button name="action_test_connection"
+                            string="🔍 Tester la connexion"
+                            type="object"
+                            class="btn-secondary"/>
+                    <button name="action_refresh_cookies"
+                            string="🔄 Mettre à jour les cookies"
+                            type="object"
+                            class="btn-warning"
+                            invisible="state != 'valid'"/>
+                    <button name="action_set_default"
+                            string="⭐ Définir par défaut"
+                            type="object"
+                            class="btn-info"
+                            invisible="is_default"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,valid"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_downloads"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-download">
+                            <field name="download_count" widget="statinfo"
+                                   string="Téléchargements"/>
+                        </button>
+                    </div>
+
+                    <!-- Ribbon par défaut -->
+                    <widget name="web_ribbon" title="Par défaut"
+                            bg_color="text-bg-success"
+                            invisible="not is_default"/>
+
+                    <!-- Ribbon expiré -->
+                    <widget name="web_ribbon" title="Expiré"
+                            bg_color="text-bg-warning"
+                            invisible="state != 'expired'"/>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Mon compte YouTube..."/>
+                        </h1>
+                    </div>
+
+                    <!-- Alerte succès -->
+                    <div class="alert alert-success d-flex align-items-center" role="alert"
+                         invisible="state != 'valid'">
+                        <span class="fs-3 me-3">✅</span>
+                        <div>
+                            <strong>Compte validé</strong> —
+                            Les téléchargements peuvent utiliser ce compte pour éviter les problèmes de cookies.
+                            <div class="text-muted mt-1" invisible="not last_validation_date">
+                                Dernière validation : <field name="last_validation_date"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerte erreur -->
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'error'">
+                        <div class="d-flex align-items-start">
+                            <span class="fs-3 me-3">❌</span>
+                            <div class="flex-grow-1">
+                                <strong>Erreur de connexion</strong>
+                                <div class="mt-1">
+                                    <field name="last_error"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aide non configuré -->
+                    <div class="alert alert-info" role="alert"
+                         invisible="state != 'draft'">
+                        <div class="d-flex align-items-start">
+                            <span class="fs-3 me-3">💡</span>
+                            <div>
+                                <strong>Comment configurer ?</strong>
+                                <ol class="mt-2 mb-0">
+                                    <li>Connectez-vous à YouTube dans votre navigateur</li>
+                                    <li>Installez l'extension
+                                        <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc"
+                                           target="_blank">Get cookies.txt LOCALLY</a>
+                                    </li>
+                                    <li>Sur youtube.com, cliquez sur l'extension → « Export »</li>
+                                    <li>Uploadez le fichier ci-dessous</li>
+                                    <li>Cliquez sur « Sauvegarder et Valider »</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="🔐 Authentification">
+                            <field name="auth_method" widget="radio"/>
+                            <field name="cookie_file_content"
+                                   filename="cookie_file_name"
+                                   invisible="auth_method != 'cookie_file'"/>
+                            <field name="cookie_file_name" invisible="1"/>
+                            <field name="browser_name"
+                                   invisible="auth_method != 'browser'"/>
+                            <field name="browser_profile"
+                                   invisible="auth_method != 'browser'"
+                                   placeholder="Laisser vide pour le profil par défaut"/>
+                            <div class="alert alert-warning mt-2 p-2" role="alert"
+                                 invisible="auth_method != 'browser'">
+                                <small>
+                                    ⚠️ <strong>Attention :</strong> L'extraction depuis navigateur
+                                    ne fonctionne que si Odoo tourne sur la même machine que le navigateur
+                                    (développement local). En production (serveur distant), utilisez
+                                    la méthode <strong>Fichier cookies.txt</strong>.
+                                </small>
+                            </div>
+                        </group>
+                        <group string="📋 Informations">
+                            <field name="email_hint"
+                                   placeholder="exemple@gmail.com"/>
+                            <field name="channel_name"/>
+                            <field name="channel_url" widget="url"/>
+                            <field name="is_default"/>
+                            <field name="user_id"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="📝 Notes" name="notes">
+                            <field name="note"
+                                   placeholder="Notes sur ce compte YouTube..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE LISTE — youtube.account
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_account_tree" model="ir.ui.view">
+        <field name="name">youtube.account.tree</field>
+        <field name="model">youtube.account</field>
+        <field name="arch" type="xml">
+            <tree string="Comptes YouTube"
+                  decoration-success="state == 'valid'"
+                  decoration-danger="state == 'error'"
+                  decoration-warning="state == 'expired'"
+                  decoration-muted="state == 'draft'">
+                <field name="name"/>
+                <field name="auth_method"/>
+                <field name="email_hint"/>
+                <field name="channel_name"/>
+                <field name="is_default" widget="boolean_toggle"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'valid'"
+                       decoration-danger="state == 'error'"
+                       decoration-warning="state == 'expired'"
+                       decoration-info="state == 'draft'"/>
+                <field name="download_count"/>
+                <field name="last_validation_date"/>
+                <field name="user_id" widget="many2one_avatar"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE KANBAN — youtube.account
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_account_kanban" model="ir.ui.view">
+        <field name="name">youtube.account.kanban</field>
+        <field name="model">youtube.account</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="auth_method"/>
+                <field name="is_default"/>
+                <field name="email_hint"/>
+                <field name="download_count"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top mb-0">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <t t-if="record.is_default.raw_value">⭐ </t>
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <field name="state" widget="label_selection"
+                                           options="{'classes': {
+                                               'draft': 'info',
+                                               'valid': 'success',
+                                               'expired': 'warning',
+                                               'error': 'danger'
+                                           }}"/>
+                                </div>
+                                <div class="text-muted">
+                                    <field name="email_hint"/>
+                                </div>
+                                <div class="mt-1">
+                                    <span class="badge bg-primary">
+                                        <field name="download_count"/> téléchargement(s)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VUE RECHERCHE — youtube.account
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_account_search" model="ir.ui.view">
+        <field name="name">youtube.account.search</field>
+        <field name="model">youtube.account</field>
+        <field name="arch" type="xml">
+            <search string="Comptes YouTube">
+                <field name="name"/>
+                <field name="email_hint"/>
+                <field name="channel_name"/>
+                <filter string="Valides" name="valid"
+                        domain="[('state', '=', 'valid')]"/>
+                <filter string="Par défaut" name="default"
+                        domain="[('is_default', '=', True)]"/>
+                <filter string="En erreur" name="error"
+                        domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter string="Mes comptes" name="my_accounts"
+                        domain="[('user_id', '=', uid)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter string="État" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Méthode" name="group_method"
+                            context="{'group_by': 'auth_method'}"/>
+                    <filter string="Propriétaire" name="group_user"
+                            context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACTIONS
+    ════════════════════════════════════════════════════════════ -->
+    <record id="action_youtube_account" model="ir.actions.act_window">
+        <field name="name">Comptes YouTube</field>
+        <field name="res_model">youtube.account</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_youtube_account_search"/>
+        <field name="context">{'search_default_my_accounts': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Ajoutez un compte YouTube
+            </p>
+            <p>
+                Connectez votre compte YouTube pour télécharger sans restriction.<br/>
+                Les cookies de votre compte permettent d'éviter les blocages anti-bot de YouTube.
+            </p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         WIZARD — Refresh cookies
+    ════════════════════════════════════════════════════════════ -->
+    <record id="view_youtube_account_refresh_wizard_form" model="ir.ui.view">
+        <field name="name">youtube.account.refresh.wizard.form</field>
+        <field name="model">youtube.account.refresh.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Mise à jour des cookies">
+                <group>
+                    <field name="account_id" invisible="1"/>
+                    <field name="account_name" string="Compte"/>
+                    <field name="auth_method" string="Méthode"/>
+                </group>
+                <div class="alert alert-info" role="alert">
+                    <field name="info_message"/>
+                </div>
+                <group invisible="auth_method != 'cookie_file'">
+                    <field name="new_cookie_file"
+                           filename="new_cookie_file_name"
+                           string="Nouveau fichier cookies.txt"/>
+                    <field name="new_cookie_file_name" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_refresh"
+                            string="🔄 Mettre à jour et valider"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_youtube_account_refresh_wizard" model="ir.actions.act_window">
+        <field name="name">Mettre à jour les cookies</field>
+        <field name="res_model">youtube.account.refresh.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

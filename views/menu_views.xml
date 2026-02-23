@@ -78,6 +78,22 @@
               groups="youtube_downloader.group_youtube_user"/>
 
     <!-- ═══════════════════════════════════════════
+         Comptes YouTube
+    ═══════════════════════════════════════════ -->
+    <menuitem id="menu_youtube_accounts_parent"
+              name="🔐 Comptes YouTube"
+              parent="menu_youtube_downloader_root"
+              sequence="25"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <menuitem id="menu_youtube_accounts"
+              name="Mes comptes"
+              parent="menu_youtube_accounts_parent"
+              action="action_youtube_account"
+              sequence="10"
+              groups="youtube_downloader.group_youtube_user"/>
+
+    <!-- ═══════════════════════════════════════════
          Telegram
     ═══════════════════════════════════════════ -->
     <menuitem id="menu_telegram_parent"

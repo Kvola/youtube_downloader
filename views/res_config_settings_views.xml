@@ -34,6 +34,16 @@
                                         type="object"
                                         class="btn btn-sm btn-outline-secondary"/>
                             </div>
+                            <div class="alert alert-info mt-2 p-2" role="alert">
+                                <small>
+                                    💡 <strong>Recommandé :</strong> Utilisez plutôt les
+                                    <a href="#" class="alert-link"
+                                       data-oe-model="youtube.account"
+                                       data-oe-id="action_youtube_account">Comptes YouTube</a>
+                                    (menu 🔐 Comptes YouTube) pour gérer vos cookies par compte.
+                                    Le fichier global ci-dessus est utilisé en dernier recours.
+                                </small>
+                            </div>
                         </setting>
                         <setting string="Espace disque"
                                  help="Informations sur le stockage disponible.">

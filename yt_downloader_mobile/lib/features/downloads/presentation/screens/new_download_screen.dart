@@ -7,6 +7,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../providers/download_provider.dart';
 import '../../data/repositories/download_repository.dart';
 import '../../domain/entities/download.dart';
+import '../../../youtube_accounts/presentation/providers/youtube_account_provider.dart';
 
 class NewDownloadScreen extends ConsumerStatefulWidget {
   const NewDownloadScreen({super.key});
@@ -18,6 +19,7 @@ class NewDownloadScreen extends ConsumerStatefulWidget {
 class _NewDownloadScreenState extends ConsumerState<NewDownloadScreen> {
   final _urlController = TextEditingController();
   String _selectedQuality = '720p';
+  int? _selectedAccountId;
   VideoInfo? _videoInfo;
   bool _isFetchingInfo = false;
   bool _isCreating = false;
@@ -72,6 +74,7 @@ class _NewDownloadScreenState extends ConsumerState<NewDownloadScreen> {
             url: url,
             quality: _selectedQuality,
             format: format,
+            youtubeAccountId: _selectedAccountId,
           );
 
       if (mounted) {
@@ -202,6 +205,11 @@ class _NewDownloadScreenState extends ConsumerState<NewDownloadScreen> {
             ),
             const SizedBox(height: 8),
             _buildQualitySelector(),
+
+            const SizedBox(height: 24),
+
+            // ─── YouTube Account Selection ──────────────
+            _buildAccountSelector(),
 
             const SizedBox(height: 32),
 
@@ -440,5 +448,109 @@ class _NewDownloadScreenState extends ConsumerState<NewDownloadScreen> {
         );
       }).toList(),
     ).animate().fadeIn(delay: 250.ms);
+  }
+
+  Widget _buildAccountSelector() {
+    final accountsAsync = ref.watch(youtubeAccountsProvider);
+
+    return accountsAsync.when(
+      data: (accounts) {
+        if (accounts.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        // Auto-sélectionner le compte par défaut si pas encore choisi
+        if (_selectedAccountId == null) {
+          final defaultAccount = ref.read(defaultYoutubeAccountProvider);
+          if (defaultAccount != null) {
+            // Planifier la mise à jour après le build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() => _selectedAccountId = defaultAccount.id);
+              }
+            });
+          }
+        }
+
+        final usableAccounts =
+            accounts.where((a) => a.isUsable).toList();
+        if (usableAccounts.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Compte YouTube',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int?>(
+                  value: _selectedAccountId,
+                  isExpanded: true,
+                  dropdownColor: AppColors.surface,
+                  hint: const Text(
+                    'Aucun (cookies globaux)',
+                    style: TextStyle(color: AppColors.textHint),
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text(
+                        'Aucun (cookies globaux)',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ),
+                    ...usableAccounts.map((account) {
+                      return DropdownMenuItem<int?>(
+                        value: account.id,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 16,
+                              color: account.isDefault
+                                  ? AppColors.primary
+                                  : AppColors.success,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                account.displayName,
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    setState(() => _selectedAccountId = value);
+                  },
+                ),
+              ),
+            ),
+          ],
+        ).animate().fadeIn(delay: 280.ms);
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
   }
 }

@@ -36,14 +36,19 @@ class DownloadRepository {
     required String url,
     String quality = '720p',
     String format = 'mp4',
+    int? youtubeAccountId,
   }) async {
+    final data = <String, dynamic>{
+      'url': url,
+      'quality': quality,
+      'format': format,
+    };
+    if (youtubeAccountId != null) {
+      data['youtube_account_id'] = youtubeAccountId;
+    }
     final response = await _api.post(
       AppConstants.createDownloadEndpoint,
-      data: {
-        'url': url,
-        'quality': quality,
-        'format': format,
-      },
+      data: data,
     );
     if (response['success'] != true) {
       throw Exception(

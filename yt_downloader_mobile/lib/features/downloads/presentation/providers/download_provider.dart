@@ -64,12 +64,14 @@ class DownloadsNotifier extends AsyncNotifier<List<Download>> {
     required String url,
     required String quality,
     String format = 'mp4',
+    int? youtubeAccountId,
   }) async {
     final repo = ref.read(downloadRepositoryProvider);
     final download = await repo.createDownload(
       url: url,
       quality: quality,
       format: format,
+      youtubeAccountId: youtubeAccountId,
     );
     await refresh();
     return download;
