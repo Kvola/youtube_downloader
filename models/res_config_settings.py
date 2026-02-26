@@ -90,7 +90,7 @@ class ResConfigSettings(models.TransientModel):
     telegram_session_path = fields.Char(
         string='Chemin du fichier de session',
         config_parameter='youtube_downloader.telegram_session_path',
-        default='/tmp/youtube_downloads/telegram_session',
+        default='/tmp/youtube_downloads/telegram/telegram_session',
         help="Chemin vers le fichier de session Telegram (sera créé automatiquement).",
     )
     telegram_max_concurrent = fields.Integer(

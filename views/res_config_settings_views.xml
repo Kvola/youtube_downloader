@@ -109,7 +109,7 @@
                                  string="Chemin de session"
                                  help="Chemin où stocker le fichier de session Telegram.">
                             <field name="telegram_session_path"
-                                   placeholder="/tmp/youtube_downloads/telegram_session"/>
+                                   placeholder="/tmp/youtube_downloads/telegram/telegram_session"/>
                         </setting>
                         <setting id="telegram_max_concurrent"
                                  string="Téléchargements simultanés"

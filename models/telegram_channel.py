@@ -201,7 +201,7 @@ class TelegramChannel(models.Model):
         phone = ICP.get_param('youtube_downloader.telegram_phone', '')
         session_path = ICP.get_param(
             'youtube_downloader.telegram_session_path',
-            '/tmp/youtube_downloads/telegram_session'
+            '/tmp/youtube_downloads/telegram/telegram_session'
         )
 
         if not api_id or not api_hash:

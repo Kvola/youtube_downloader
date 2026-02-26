@@ -83,7 +83,7 @@ class TelegramAuthWizard(models.TransientModel):
         api_hash = ICP.get_param('youtube_downloader.telegram_api_hash', '')
         session_path = ICP.get_param(
             'youtube_downloader.telegram_session_path',
-            '/tmp/youtube_downloads/telegram_session'
+            '/tmp/youtube_downloads/telegram/telegram_session'
         )
         if not api_id or not api_hash:
             raise UserError(_(
