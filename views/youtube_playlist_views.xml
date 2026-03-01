@@ -139,6 +139,9 @@
                             string="➕ Ajouter des médias YouTube" class="btn-secondary"/>
                     <button name="action_add_external_media" type="object"
                             string="📂 Ajouter des médias externes" class="btn-secondary"/>
+                    <button name="action_sort_items" type="object"
+                            string="🔀 Trier" class="btn-secondary"
+                            invisible="item_count == 0"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">

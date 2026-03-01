@@ -320,3 +320,17 @@ class YoutubePlaylist(models.Model):
                 'default_playlist_id': self.id,
             },
         }
+
+    def action_sort_items(self):
+        """Ouvre un wizard pour trier les éléments de la playlist."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Trier la liste de lecture'),
+            'res_model': 'youtube.playlist.sort.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_playlist_id': self.id,
+            },
+        }

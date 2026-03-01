@@ -55,6 +55,7 @@ Module complet de téléchargement YouTube avec :
         'wizard/youtube_download_wizard_views.xml',
         'wizard/telegram_auth_wizard_views.xml',
         'wizard/audio_repair_wizard_views.xml',
+        'wizard/youtube_playlist_sort_wizard_views.xml',
         'views/menu_views.xml',
     ],
     'assets': {

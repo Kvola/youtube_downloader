@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════
+         Wizard : Trier les éléments de la playlist
+    ═══════════════════════════════════════════ -->
+    <record id="view_youtube_playlist_sort_wizard_form" model="ir.ui.view">
+        <field name="name">youtube.playlist.sort.wizard.form</field>
+        <field name="model">youtube.playlist.sort.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Trier la liste de lecture">
+                <group>
+                    <field name="playlist_id" readonly="1"/>
+                    <field name="sort_by"/>
+                    <field name="sort_direction" widget="radio"/>
+                </group>
+                <footer>
+                    <button name="action_sort" string="Trier" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -27,3 +27,4 @@ access_audio_repair_wizard_user,audio.repair.wizard user,model_audio_repair_wiza
 access_youtube_account_user,youtube.account user,model_youtube_account,group_youtube_user,1,1,1,0
 access_youtube_account_manager,youtube.account manager,model_youtube_account,group_youtube_manager,1,1,1,1
 access_youtube_account_refresh_wizard_user,youtube.account.refresh.wizard user,model_youtube_account_refresh_wizard,group_youtube_user,1,1,1,1
+access_youtube_playlist_sort_wizard_user,youtube.playlist.sort.wizard user,model_youtube_playlist_sort_wizard,group_youtube_user,1,1,1,1
